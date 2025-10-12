@@ -8,16 +8,16 @@ Joseph Liefeld:
   Phone: 971-940-6428
 
 Ella Gordon:
-  Email: 
-  Phone: 
+  Email: gordella@oregonstate.edu
+  Phone: 425-777-0519
 
 Wyatt Fujikawa:
-  Email: 
-  Phone: 
+  Email: fujikaww@oregonstate.edu
+  Phone: 808-209-3937
 
 Stephen Tsui:
-  Email: 
-  Phone: 
+  Email: tsuis@oregonstate.edu
+  Phone: 650-695-3920
 
 Kekoa Young:
   Email: youngkek@oregonstate.edu
