@@ -20,5 +20,5 @@ Stephen Tsui:
   Phone: 
 
 Kekoa Young:
-  Email: 
-  Phone: 
+  Email: youngkek@oregonstate.edu
+  Phone: 808-202-4207
