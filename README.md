@@ -1,6 +1,8 @@
 # TrekTrak_Capstone
 This is the repository for the TrekTrak: Fitness Events Management and Participation capstone project
 
+Continous Integration: feature/* → PR → ≥1 review → merge
+
 Contact Information:
 
 Joseph Liefeld:
