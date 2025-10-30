@@ -1,4 +1,4 @@
-import { useState } from 'react'
+// import { useState } from 'react'
 import { Routes, Route, Link } from 'react-router-dom';
 import './App.css'
 import Home from './pages/Home';
@@ -6,7 +6,7 @@ import Events from './pages/Events';
 import Settings from './pages/Settings';
 
 function App() {
-  const [count, setCount] = useState(0)
+  // const [count, setCount] = useState(0)
 
   return (
     <>
