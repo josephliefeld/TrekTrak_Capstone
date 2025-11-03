@@ -17,8 +17,15 @@ npm run dev
  
 ## Branching & Workflow
 
-Describe the workflow (e.g., trunk-based or GitFlow), default branch, branch naming, and when to rebase vs. merge.
+Describe the workflow (e.g., trunk-based or GitFlow), default branch, branch naming, and when to rebase vs. merge.  
+We will be using a trunk-based workflow. Each person will be working on their own branch.  
+Default branch is main.  
 
+**Branch Naming**  
+name_webapp  
+name_mobileapp  
+
+We will be merging branches to main after completing any features/changes.
 ## Issues & Planning
 
 Explain how to file issues, required templates/labels, estimation, and triage/assignment practices.
@@ -69,7 +76,7 @@ CHANGELOG.md: If setup, coding styles, or other major changes are made.
 
 Docstring/Comment Standards:  
 Follow chosen style conventions.  
-Write clear and concise comments explaining *why* code decisions were made.  
+Write clear and concise comments explaining why code decisions were made.  
 Update docstrings or inline comments when logic or function signatures change.  
 ## Release Process
 
