@@ -34,6 +34,9 @@ documents: e.g. update README with setup steps
 ## Code Style, Linting & Formatting
 
 Name the formatter/linter, config file locations, and the exact commands to check/fix locally.
+Linter: Biome.js
+Config Locations: MyApp, web-app
+Check/Fix: biome lint, bimoe check
 
 ## Testing
 
