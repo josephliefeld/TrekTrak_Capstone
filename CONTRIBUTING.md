@@ -62,14 +62,15 @@ TBD
 
 ## Documentation Expectations
 
-Specify what must be updated (README, docs/, API refs, CHANGELOG) and docstring/comment standards.
-What should be updated:
-- **README.md:** If changes add new features, modify setup instructions, or affect the continuous integration process.  
-- **CHANGELOG.md:** If setup, coding styles, or other major changes are made.
+Specify what must be updated (README, docs/, API refs, CHANGELOG) and docstring/comment standards.  
+What should be updated:  
+README.md: If changes add new features, modify setup instructions, or affect the continuous integration process.  
+CHANGELOG.md: If setup, coding styles, or other major changes are made.  
 
-- Follow chosen style conventions.  
-- Write clear and concise comments explaining *why* code decisions were made.  
-- Update docstrings or inline comments when logic or function signatures change.
+Docstring/Comment Standards:  
+Follow chosen style conventions.  
+Write clear and concise comments explaining *why* code decisions were made.  
+Update docstrings or inline comments when logic or function signatures change.  
 ## Release Process
 
 Describe versioning scheme, tagging, changelog generation, packaging/publishing steps, and rollback process.
