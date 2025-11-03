@@ -10,11 +10,11 @@ Reference the project/community behavior expectations and reporting process.
 
 List prerequisites, setup steps, environment variables/secrets handling, and how to run the app locally.
 
-git clone git@github.com:josephliefeld/TrekTrak_Capstone.git
-cd web-app
-npm install
-npm run dev
-
+git clone git@github.com:josephliefeld/TrekTrak_Capstone.git  
+cd web-app  
+npm install  
+npm run dev  
+ 
 ## Branching & Workflow
 
 Describe the workflow (e.g., trunk-based or GitFlow), default branch, branch naming, and when to rebase vs. merge.
@@ -27,9 +27,9 @@ Explain how to file issues, required templates/labels, estimation, and triage/as
 
 State the convention (e.g., Conventional Commits), include examples, and how to reference issues.
 
-features: e.g. add user authentication
-fixes: e.g. prevent crash when missing token
-documents: e.g. update README with setup steps
+features: e.g. add user authentication  
+fixes: e.g. prevent crash when missing token  
+documents: e.g. update README with setup steps  
 
 ## Code Style, Linting & Formatting
 
