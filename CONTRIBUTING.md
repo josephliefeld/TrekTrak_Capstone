@@ -42,6 +42,8 @@ Check/Fix: biome lint, bimoe check
 
 Define required test types, how to run tests, expected coverage thresholds, and when new/updated tests are mandatory.
 
+TBD
+
 ## Pull Requests & Reviews
 
 Outline PR requirements (template, checklist, size limits), reviewer expectations, approval rules, and required status checks.
@@ -56,6 +58,8 @@ Link to pipeline definitions, list mandatory jobs, how to view logs/re-run jobs,
 
 State how to report vulnerabilities, prohibited patterns (hard-coded secrets), dependency update policy, and scanning tools.
 
+TBD
+
 ## Documentation Expectations
 
 Specify what must be updated (README, docs/, API refs, CHANGELOG) and docstring/comment standards.
@@ -63,6 +67,8 @@ Specify what must be updated (README, docs/, API refs, CHANGELOG) and docstring/
 ## Release Process
 
 Describe versioning scheme, tagging, changelog generation, packaging/publishing steps, and rollback process.
+
+TBD
 
 ## Support & Contact
 
