@@ -13,7 +13,7 @@ export default function EventView() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data, error } = await supabase.from<Event>("event").select("*");
+      const { data, error } = await supabase.from<"event", Event>("event").select("*");
       if (error) {
         console.error("Error fetching events:", error);
       } else {
