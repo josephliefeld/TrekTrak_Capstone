@@ -9,6 +9,7 @@ import EventView from './pages/EventView';
 import Participants from './pages/Participants';
 import Teams from './pages/Teams';
 import Statistics from './pages/Statistics';
+import Login from './pages/Login'; 
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -23,7 +24,8 @@ function App() {
         </nav>
 
         <Routes>
-          <Route index element={<Home />} />
+          <Route path="/" element={<Login />} /> 
+          <Route path="home" element={<Home />} /> 
           <Route path="profile" element={<Profile />} />
           
           <Route path="events" element={<Events />}>
@@ -35,7 +37,7 @@ function App() {
             </Route>
           </Route>
 
-          <Route path="*" element={<Home />} />
+          <Route path="*" element={<Login />} />
         </Routes>
 
         {/* <Routes>
