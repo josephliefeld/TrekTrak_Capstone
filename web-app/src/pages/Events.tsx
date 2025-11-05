@@ -9,7 +9,7 @@ export default function Events() {
 
         <nav className="p-4 bg-gray-100 flex gap-4">
           <Link to="create">Create</Link>
-          <Link to="view-event">EventView</Link>
+          <Link to="view-and-edit">View</Link>
         </nav>
         <Outlet /> 
     </div>
