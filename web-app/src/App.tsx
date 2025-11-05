@@ -1,5 +1,5 @@
 // import { useState } from 'react'
-import { Routes, Route, Link, Outlet } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import './App.css'
 import Home from './pages/Home';
 import Events from './pages/Events';
@@ -20,9 +20,6 @@ function App() {
           <Link to="/">Home</Link>
           <Link to="/events">Events</Link>
           <Link to="/settings">Settings</Link>
-          <Link to="/create">Create</Link>
-
-          <Outlet />
         </nav>
 
         <Routes>
