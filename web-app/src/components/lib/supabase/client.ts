@@ -1,8 +1,7 @@
-import { createBrowserClient } from '@supabase/ssr'
+// src/components/lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr';
 
-export function createClient() {
-  return createBrowserClient(
-    import.meta.env.VITE_SUPABASE_URL!,
-    import.meta.env.VITE_SUPABASE_PUBLISHABLE_OR_ANON_KEY!
-  )
-}
+export const supabase = createBrowserClient(
+  import.meta.env.VITE_SUPABASE_URL!,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_OR_ANON_KEY!
+);
