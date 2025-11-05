@@ -42,6 +42,10 @@ export default function HomeScreen() {
         <Link href="/leaderboards" style={styles.linkButton}>
           <ThemedText type="subtitle" style={styles.linkText}>🥇 Leaderboards</ThemedText>
         </Link>
+        
+        <Link href="/stats" style={styles.linkButton}>
+          <ThemedText type="subtitle" style={styles.linkText}>📊 Stats</ThemedText>
+        </Link>
       </ThemedView>
 
     </ParallaxScrollView>
