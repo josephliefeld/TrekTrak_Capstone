@@ -35,6 +35,7 @@ import {
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function Create() {
   // const [open, setOpen] = React.useState(false)
@@ -68,7 +69,7 @@ export default function Create() {
               </Field>
               <Field>
                 <FieldLabel htmlFor="description">Event Description</FieldLabel>
-                <input
+                <Textarea 
                   id="description"
                   placeholder="Description"
                   required
@@ -142,16 +143,26 @@ export default function Create() {
                   </Popover>
                 </Field>
               </div>
-              <div className="flex gap-6">
-                <Field orientation="horizontal">
+              <Field>
+                <div className="flex items-start gap-3">
                   <Checkbox
                     id="make-private"
                     className="w-[16px]"
-                    required
                   />
-                  <Label htmlFor="make-private">Make Private</Label>
-                </Field>
-              </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="make-private">
+                      Make Private
+                    </Label>
+                    <p className="text-muted-foreground text-sm">
+                      Make event private so only approved users can join.
+                    </p>
+                  </div>
+                </div>
+              </Field>
+              <Field orientation="horizontal">
+                <Button type="submit">Save</Button>
+                <Button variant="outline" type="button">Cancel</Button>
+              </Field>
             </FieldGroup>
           </FieldSet>
         </FieldGroup>
