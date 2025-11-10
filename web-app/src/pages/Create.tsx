@@ -38,9 +38,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function Create() {
-  // const [open, setOpen] = React.useState(false)
-  // const [date, setDate] = React.useState<Date | undefined>(undefined)
-
   const [startDate, setStartDate] = React.useState<Date | undefined>();
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const [startOpen, setStartOpen] = React.useState(false);
@@ -48,9 +45,6 @@ export default function Create() {
 
   return (
     <>
-      {/* <div className="text-3xl">
-        <h1>Add Event Details</h1>
-      </div> */}
       <form>
         <FieldGroup>
           <FieldSet>
@@ -148,6 +142,7 @@ export default function Create() {
                   <Checkbox
                     id="make-private"
                     className="w-[16px]"
+                    onClick={() => {console.log("Selected Make Private")}}
                   />
                   <div className="grid gap-2">
                     <Label htmlFor="make-private">
@@ -160,8 +155,8 @@ export default function Create() {
                 </div>
               </Field>
               <Field orientation="horizontal">
-                <Button type="submit">Save</Button>
-                <Button variant="outline" type="button">Cancel</Button>
+                <Button type="submit" onClick={() => {console.log("Event Saved")}}>Save</Button>
+                <Button variant="outline" type="button" onClick={() => {console.log("Create Event Canceled")}}>Cancel</Button>
               </Field>
             </FieldGroup>
           </FieldSet>
