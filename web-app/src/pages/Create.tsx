@@ -43,15 +43,22 @@ export default function Create() {
   const [startOpen, setStartOpen] = React.useState(false);
   const [endOpen, setEndOpen] = React.useState(false);
 
+  const [fileName, setFileName] = React.useState("No file chosen");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFileName(file ? file.name : "No file chosen");
+  };
+
   return (
     <>
       <form>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Add Event Details</FieldLegend>
-            <FieldDescription>
+            {/* <FieldDescription>
               Add event information
-            </FieldDescription>
+            </FieldDescription> */}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="title">Event Title</FieldLabel>
@@ -61,6 +68,26 @@ export default function Create() {
                   required
                 />
               </Field>
+              <Field>
+                <FieldLabel htmlFor="banner">Banner Image</FieldLabel>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    id="banner"
+                    accept=".png, .jpeg, .jpg"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <label
+                    htmlFor="banner"
+                    className="px-1 py-1 w-[64] border border-gray-300 text-sm"
+                  >
+                    Choose File
+                  </label>
+                  <span className="text-sm text-gray-600">{fileName}</span>
+                </div>
+              </Field>
+
               <Field>
                 <FieldLabel htmlFor="description">Event Description</FieldLabel>
                 <Textarea 
@@ -106,6 +133,11 @@ export default function Create() {
                             setStartDate(date)
                             setStartOpen(false)
                           }}
+                          // NEED TO FIX DATE RANGE
+                          // disabled={{
+                          //   before: new Date(2000, 0, 1),
+                          //   after: new Date(2035, 11, 31),
+                          // }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -150,6 +182,23 @@ export default function Create() {
                     </Label>
                     <p className="text-muted-foreground text-sm">
                       Make event private so only approved users can join.
+                    </p>
+                  </div>
+                </div>
+              </Field>
+              <Field>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="publish"
+                    className="w-[16px]"
+                    onClick={() => {console.log("Selected Publish")}}
+                  />
+                  <div className="grid gap-2">
+                    <Label htmlFor="publish">
+                      Publish Event
+                    </Label>
+                    <p className="text-muted-foreground text-sm">
+                      Allow users to view and register for this event.
                     </p>
                   </div>
                 </div>
