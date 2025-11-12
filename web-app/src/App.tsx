@@ -10,7 +10,7 @@ import Login from './pages/Login';
 
 function App() {
   // const [count, setCount] = useState(0)
-  const {isLoggedIn, loading, logout} = useAuth()
+  const {isLoggedIn, loading} = useAuth()
   if (loading) return <div>Loading...</div>
   return (
     <>
