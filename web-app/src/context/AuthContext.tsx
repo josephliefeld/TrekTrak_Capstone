@@ -1,5 +1,5 @@
 import { AuthContext } from './AuthCon'
-import { useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/components/lib/supabase/client'
 
 export function AuthProvider({children}: {children: React.ReactNode}) {
