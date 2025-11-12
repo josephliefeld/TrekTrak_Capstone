@@ -1,15 +1,11 @@
 // import { useState } from 'react'
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import './App.css'
 import TopNav from "./components/TopNav";
 import Events from './pages/Events';
 import Create from './pages/Create'
 import Profile from './pages/Profile';
-import EventView from './pages/EventView';
-import Participants from './pages/Participants';
-import Teams from './pages/Teams';
-import Statistics from './pages/Statistics';
 import Login from './pages/Login';
 
 function App() {
