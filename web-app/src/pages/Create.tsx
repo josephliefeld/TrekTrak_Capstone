@@ -15,7 +15,7 @@ import {
 import {
   Field,
   // FieldContent,
-  FieldDescription,
+  // FieldDescription,
   // FieldError,
   FieldGroup,
   FieldLabel,
@@ -38,26 +38,27 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function Create() {
-  // const [open, setOpen] = React.useState(false)
-  // const [date, setDate] = React.useState<Date | undefined>(undefined)
-
   const [startDate, setStartDate] = React.useState<Date | undefined>();
   const [endDate, setEndDate] = React.useState<Date | undefined>();
   const [startOpen, setStartOpen] = React.useState(false);
   const [endOpen, setEndOpen] = React.useState(false);
 
+  const [fileName, setFileName] = React.useState("No file chosen");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setFileName(file ? file.name : "No file chosen");
+  };
+
   return (
     <>
-      {/* <div className="text-3xl">
-        <h1>Add Event Details</h1>
-      </div> */}
       <form>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Add Event Details</FieldLegend>
-            <FieldDescription>
+            {/* <FieldDescription>
               Add event information
-            </FieldDescription>
+            </FieldDescription> */}
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="title">Event Title</FieldLabel>
@@ -67,6 +68,26 @@ export default function Create() {
                   required
                 />
               </Field>
+              <Field>
+                <FieldLabel htmlFor="banner">Banner Image</FieldLabel>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="file"
+                    id="banner"
+                    accept=".png, .jpeg, .jpg"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                  <label
+                    htmlFor="banner"
+                    className="px-1 py-1 w-[64] border border-gray-300 text-sm"
+                  >
+                    Choose File
+                  </label>
+                  <span className="text-sm text-gray-600">{fileName}</span>
+                </div>
+              </Field>
+
               <Field>
                 <FieldLabel htmlFor="description">Event Description</FieldLabel>
                 <Textarea 
@@ -112,6 +133,11 @@ export default function Create() {
                             setStartDate(date)
                             setStartOpen(false)
                           }}
+                          // NEED TO FIX DATE RANGE
+                          // disabled={{
+                          //   before: new Date(2000, 0, 1),
+                          //   after: new Date(2035, 11, 31),
+                          // }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -148,6 +174,7 @@ export default function Create() {
                   <Checkbox
                     id="make-private"
                     className="w-[16px]"
+                    onClick={() => {console.log("Selected Make Private")}}
                   />
                   <div className="grid gap-2">
                     <Label htmlFor="make-private">
@@ -159,9 +186,26 @@ export default function Create() {
                   </div>
                 </div>
               </Field>
+              <Field>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="publish"
+                    className="w-[16px]"
+                    onClick={() => {console.log("Selected Publish")}}
+                  />
+                  <div className="grid gap-2">
+                    <Label htmlFor="publish">
+                      Publish Event
+                    </Label>
+                    <p className="text-muted-foreground text-sm">
+                      Allow users to view and register for this event.
+                    </p>
+                  </div>
+                </div>
+              </Field>
               <Field orientation="horizontal">
-                <Button type="submit">Save</Button>
-                <Button variant="outline" type="button">Cancel</Button>
+                <Button type="submit" onClick={() => {console.log("Event Saved")}}>Save</Button>
+                <Button variant="outline" type="button" onClick={() => {console.log("Create Event Canceled")}}>Cancel</Button>
               </Field>
             </FieldGroup>
           </FieldSet>
