@@ -25,7 +25,7 @@ export default function LoginForm() {
       }
       
       setIsLoggedIn(true)
-      navigate('/home')
+      navigate('/events')
     }
   
     return (

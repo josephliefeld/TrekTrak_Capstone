@@ -33,12 +33,12 @@ function App() {
           ) : (
             <>
               {/* Authenticated routes */}
-              <Route path="/" element={<Events />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/create" element={<Create />} />
               <Route path="/profile" element={<Profile />} />
               {/* Default redirect for logged-in users */}
-              <Route path="/" element={<Navigate to="/" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="/" element={<Navigate to="/events" replace />} />
+              <Route path="*" element={<Navigate to="/events" replace />} />
             </>
           )}
 

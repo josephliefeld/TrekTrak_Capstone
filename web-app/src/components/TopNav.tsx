@@ -57,6 +57,12 @@ const TopNav: React.FC = () => {
                             <Link to="/profile" onClick={() => {console.log("Clicked Profile")}}>Profile</Link>
                         </NavigationMenuLink>
                     </NavigationMenuItem>
+                    {/* Logout Button */}
+                    <NavigationMenuItem>
+                        <NavigationMenuLink>
+                            <Link to="/" onClick={() => {console.log("Clicked Logout")}} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Log Out</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
                 </NavigationMenuList>
             </NavigationMenu>
         </>
