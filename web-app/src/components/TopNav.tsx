@@ -1,7 +1,7 @@
 // import { Link, useLocation } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '@/components/lib/supabase/client'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 import {
   NavigationMenu,

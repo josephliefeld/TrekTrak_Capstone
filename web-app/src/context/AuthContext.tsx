@@ -1,4 +1,4 @@
-import { AuthContext, AuthContextType } from './AuthCon'
+import { AuthContext } from './AuthCon'
 import { useContext, useEffect, useState } from 'react'
 import { supabase } from '@/components/lib/supabase/client'
 
@@ -39,10 +39,4 @@ export function AuthProvider({children}: {children: React.ReactNode}) {
             {children}
         </AuthContext.Provider>
     )
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext)
-    if (!context) throw new Error('useAuth must be used within an AuthProvider')
-    return context
 }
