@@ -2,6 +2,7 @@ import * as React from "react"
 // import { format } from "date-fns"
 // import { Calendar as CalendarIcon } from "lucide-react"
 import { ChevronDownIcon } from "lucide-react"
+import { useNavigate } from "react-router-dom";
  
 // import { cn } from "@/components/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,19 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { supabase } from "@/components/lib/supabase/client";
+
+type Event = {
+  id: number;
+  organizer: string;
+  event_name: string;
+  event_type: string;
+  is_private: boolean;
+  start_date: string;
+  end_date: string;
+  event_description: string;
+  is_published: boolean;
+};
 
 export default function Create() {
   const [startDate, setStartDate] = React.useState<Date | undefined>();
@@ -43,16 +57,63 @@ export default function Create() {
   const [startOpen, setStartOpen] = React.useState(false);
   const [endOpen, setEndOpen] = React.useState(false);
 
+  const [title, setTitle] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [eventType, setEventType] = React.useState("");
+  const [isPrivate, setIsPrivate] = React.useState(false);
+  const [isPublished, setIsPublished] = React.useState(false);
+
   const [fileName, setFileName] = React.useState("No file chosen");
+
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setFileName(file ? file.name : "No file chosen");
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // convert dates to strings of format YYYY-MM-DD
+    const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
+    const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
+
+    const { data, error } = await supabase
+      .from("events")
+      .insert([
+        {
+          organizer: "Default Organizer",
+          event_name: title,
+          event_type: eventType,
+          is_private: isPrivate,
+          start_date,
+          end_date,
+          event_description: description,
+          is_published: isPublished,
+        },
+      ]);
+
+      if(error) {
+        console.log("Error creating event: ", error.message);
+        alert("Failed to add event: " + error.message);
+      } else {
+        alert("Event added successfully!");
+        console.log("Inserted:", data);
+        // Optionally clear the form
+        setTitle("");
+        setDescription("");
+        setEventType("");
+        setIsPrivate(false);
+        setIsPublished(false);
+        setStartDate(undefined);
+        setEndDate(undefined);
+      }
+  };
+
   return (
     <>
-      <form>
+      <form onSubmit={handleSubmit}>
         <FieldGroup>
           <FieldSet>
             <FieldLegend>Add Event Details</FieldLegend>
@@ -66,6 +127,8 @@ export default function Create() {
                   id="title"
                   placeholder="Title"
                   required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                 />
               </Field>
               <Field>
@@ -94,12 +157,14 @@ export default function Create() {
                   id="description"
                   placeholder="Description"
                   required
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </Field>
               <div className="w-[200px]">
                 <Field>
                   <FieldLabel htmlFor="type">Event Type</FieldLabel>
-                  <Select defaultValue="">
+                  <Select onValueChange={(value) => setEventType(value)}>
                     <SelectTrigger id="type">
                       <SelectValue placeholder="--" />
                     </SelectTrigger>
@@ -174,7 +239,9 @@ export default function Create() {
                   <Checkbox
                     id="make-private"
                     className="w-[16px]"
-                    onClick={() => {console.log("Selected Make Private")}}
+                    // onClick={() => {console.log("Selected Make Private")}}
+                    checked={isPrivate}
+                    onCheckedChange={(checked) => setIsPrivate(!!checked)}
                   />
                   <div className="grid gap-2">
                     <Label htmlFor="make-private">
@@ -191,7 +258,9 @@ export default function Create() {
                   <Checkbox
                     id="publish"
                     className="w-[16px]"
-                    onClick={() => {console.log("Selected Publish")}}
+                    // onClick={() => {console.log("Selected Publish")}}
+                    checked={isPublished}
+                    onCheckedChange={(checked) => setIsPublished(!!checked)}
                   />
                   <div className="grid gap-2">
                     <Label htmlFor="publish">
@@ -205,7 +274,7 @@ export default function Create() {
               </Field>
               <Field orientation="horizontal">
                 <Button type="submit" onClick={() => {console.log("Event Saved")}}>Save</Button>
-                <Button variant="outline" type="button" onClick={() => {console.log("Create Event Canceled")}}>Cancel</Button>
+                <Button variant="outline" type="button" onClick={() => navigate("/events")}>Cancel</Button>
               </Field>
             </FieldGroup>
           </FieldSet>
