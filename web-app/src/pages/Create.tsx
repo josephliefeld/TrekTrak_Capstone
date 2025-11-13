@@ -83,7 +83,7 @@ export default function Create() {
       .from("events")
       .insert([
         {
-          organizer: "Default Organizer",
+          organization_id: "Default Organizer",
           event_name: title,
           event_type: eventType,
           is_private: isPrivate,
