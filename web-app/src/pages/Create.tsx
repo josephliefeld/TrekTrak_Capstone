@@ -39,17 +39,17 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { supabase } from "@/components/lib/supabase/client";
 
-type Event = {
-  id: number;
-  organizer: string;
-  event_name: string;
-  event_type: string;
-  is_private: boolean;
-  start_date: string;
-  end_date: string;
-  event_description: string;
-  is_published: boolean;
-};
+// type Event = {
+//   id: number;
+//   organizer: string;
+//   event_name: string;
+//   event_type: string;
+//   is_private: boolean;
+//   start_date: string;
+//   end_date: string;
+//   event_description: string;
+//   is_published: boolean;
+// };
 
 export default function Create() {
   const [startDate, setStartDate] = React.useState<Date | undefined>();
