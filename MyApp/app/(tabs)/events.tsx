@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, FlatList, TouchableOpacity, Animated } from 'rea
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 const sampleEvents = [
   { id: '1', name: 'Morning Run' },
