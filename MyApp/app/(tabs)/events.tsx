@@ -132,7 +132,7 @@ export default function EventsScreen() {
             renderItem={({ item }) => renderEventItem(item)}
           />
         ) : (
-          <ThemedText>No events available.</ThemedText>
+          <ThemedText>No events match your search.</ThemedText>
         )}
       </ThemedView>
     </ParallaxScrollView>
