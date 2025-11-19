@@ -174,6 +174,9 @@ export default function Create() {
                   </label>
                   <span className="text-sm text-gray-600">{fileName}</span>
                 </div>
+                {fileError && (
+                  <p className="text-sm text-red-500 mt-1">{fileError}</p>
+                )}
               </Field>
 
               <Field>
