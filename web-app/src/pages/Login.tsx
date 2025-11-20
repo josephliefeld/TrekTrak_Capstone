@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { supabase } from '@/components/lib/supabase/client'
+import { useAuth } from '../context/useAuth'
 
 export default function LoginForm() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState<string | null>(null)
-    const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const { setIsLoggedIn } = useAuth()
   
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
@@ -21,12 +23,16 @@ export default function LoginForm() {
         setError(error.message)
         return
       }
-  
-      navigate('/home')
+      
+      setIsLoggedIn(true)
+      navigate('/events')
     }
   
     return (
       <form onSubmit={handleLogin} className="flex flex-col gap-2 max-w-sm mx-auto mt-10">
+        <h1 className="text-3xl font-bold text-center mb-4 text-gray-800">
+        Welcome to TrekTrak!
+        </h1>
         <input
           type="email"
           placeholder="Email"

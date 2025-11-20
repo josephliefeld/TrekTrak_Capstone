@@ -43,6 +43,7 @@ export default function Create() {
   const [description, setDescription] = React.useState("");
   const [eventType, setEventType] = React.useState("");
   const [fileName, setFileName] = React.useState("No file chosen");
+  const [fileError, setFileError] = React.useState("");
 
   // CALENDAR INFORMATION
   // dates
@@ -65,10 +66,33 @@ export default function Create() {
   // allows going to another page
   const navigate = useNavigate();
 
-  // When the user selects a file to upload, this displays the file name
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleValidatedFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    setFileName(file ? file.name : "No file chosen");
+
+    if (!file) {
+      setFileName("No file chosen");
+      setFileError("");
+      return;
+    }
+
+    const allowedTypes = ["image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError("Only PNG or JPG images are allowed.");
+      setFileName("No file chosen");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+      setFileError("File is too large. Maximum size is 2MB.");
+      setFileName("No file chosen");
+      return;
+    }
+
+    setFileError("");
+    setFileName(file.name);
   };
 
   // helper function that formats a JS date object
@@ -176,7 +200,7 @@ export default function Create() {
                     id="banner"
                     accept=".png, .jpeg, .jpg"
                     className="hidden"
-                    onChange={handleFileChange}
+                    onChange={handleValidatedFileChange}
                   />
                   <label
                     htmlFor="banner"
@@ -186,6 +210,9 @@ export default function Create() {
                   </label>
                   <span className="text-sm text-gray-600">{fileName}</span>
                 </div>
+                {fileError && (
+                  <p className="text-sm text-red-500 mt-1">{fileError}</p>
+                )}
               </Field>
               {/* Event Description Input */}
               <Field>
