@@ -370,7 +370,7 @@ export default function Create() {
           </FieldSet>
           {/* Sumbit Button and Cancel Button */}
           <Field orientation="horizontal">
-            <Button type="submit" onClick={() => navigate("/events")}>Save</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Saving..." : "Save"}</Button>
             <Button variant="outline" type="button" onClick={() => navigate("/events")}>Cancel</Button>
           </Field>
         </FieldGroup>
