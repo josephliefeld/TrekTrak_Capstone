@@ -1,14 +1,20 @@
-import { Link, useLocation } from "react-router-dom";
+// import { Link, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from '@/components/lib/supabase/client'
+import { useAuth } from '../context/useAuth'
+
 import {
   NavigationMenu,
   NavigationMenuList,
   NavigationMenuItem,
   NavigationMenuLink,
-  NavigationMenuTrigger,
-  NavigationMenuContent
+//   NavigationMenuTrigger,
+//   NavigationMenuContent
 } from "@/components/ui/navigation-menu";
 
 const TopNav: React.FC = () => {
+    const { setIsLoggedIn } = useAuth()
+    const navigate = useNavigate()
  
 //   return (
 //     <NavigationMenu>
@@ -53,6 +59,22 @@ const TopNav: React.FC = () => {
                     <NavigationMenuItem>
                         <NavigationMenuLink>
                             <Link to="/profile" onClick={() => {console.log("Clicked Profile")}}>Profile</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    {/* Logout Button */}
+                    <NavigationMenuItem>
+                        <NavigationMenuLink>
+                            <button onClick={async () => {const { error } = await supabase.auth.signOut()
+                                    if (error) {
+                                        console.error('Error logging out:', error.message)
+                                        return
+                                    }
+                                    // Update auth context
+                                    setIsLoggedIn(false)
+                                    // Navigate to home
+                                    navigate('/')
+                                }} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Log Out
+                            </button>
                         </NavigationMenuLink>
                     </NavigationMenuItem>
                 </NavigationMenuList>
