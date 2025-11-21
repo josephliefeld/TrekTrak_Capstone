@@ -36,13 +36,21 @@ export default function EventsScreen() {
     }, 3000); // disappears after 3 seconds
   };
 
+  // -------------------------
+  // UPDATED: Only 1 event active at a time
+  // -------------------------
   const handleEnroll = (id: string) => {
-    setEnrolledEvents(prev => [...prev, id]);
+    if (enrolledEvents.length >= 1) {
+      showBanner("⚠️ You may only enroll in one event at a time");
+      return;
+    }
+
+    setEnrolledEvents([id]); // enroll in ONLY this event
     showBanner('✅ You have enrolled in the event!');
   };
 
   const handleUnenroll = (id: string) => {
-    setEnrolledEvents(prev => prev.filter(eid => eid !== id));
+    setEnrolledEvents([]);
     showBanner('❌ You have unenrolled from the event.');
   };
 
@@ -79,7 +87,7 @@ export default function EventsScreen() {
           style={styles.reactLogo}
         />
       }>
-      
+
       {/* Banner */}
       {bannerMessage ? (
         <Animated.View style={[styles.banner, { opacity: bannerOpacity }]}>
@@ -113,7 +121,7 @@ export default function EventsScreen() {
       {/* Enrolled Events */}
       {enrolledEvents.length > 0 && (
         <ThemedView style={styles.sectionContainer}>
-          <ThemedText type="subtitle">Your Enrolled Events</ThemedText>
+          <ThemedText type="subtitle">Your Enrolled Event</ThemedText>
           <FlatList
             data={sampleEvents.filter(event => enrolledEvents.includes(event.id))}
             keyExtractor={item => item.id}
