@@ -180,7 +180,7 @@ const [openEditor, setOpenEditor] = useState<boolean>(false);
   // const[openEditor, setOpenEditor] = useState<number | null>(null);
   // const [text, setText] = useState("");
   // const [eventCol, setEventCol] = useState<string>("");
-  const [viewEventId, setViewEventId] = useState<number[]>([]);
+  //const [viewEventId, setViewEventId] = useState<number[]>([]);
 
 
 
