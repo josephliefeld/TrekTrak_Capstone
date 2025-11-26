@@ -8,8 +8,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectGroup,
-  SelectLabel
+  // SelectGroup,
+  // SelectLabel
 } from "@/components/ui/select"
 import React from 'react';
 import { useParams } from "react-router-dom";
@@ -185,29 +185,29 @@ const [openEditor, setOpenEditor] = useState<boolean>(false);
 
 
 
-  const updateEvent = async (id: number, edit_value: string, event_col: string) => {
-    const {error} = await supabase
-    .from('events')
-    .update({[event_col]: edit_value})
-    .eq('id', id)
+  // const updateEvent = async (id: number, edit_value: string, event_col: string) => {
+  //   const {error} = await supabase
+  //   .from('events')
+  //   .update({[event_col]: edit_value})
+  //   .eq('id', id)
 
-    if (error) {
-      console.error("Error updating event: ", error);
-    }
-  };
+  //   if (error) {
+  //     console.error("Error updating event: ", error);
+  //   }
+  // };
 
 
-  const addEventIdToView = (id: number) => {
-    const newList = viewEventId
-    if (newList.includes(id)) {
-      const index = newList.indexOf(id);
-      newList.splice(index, 1);
-    }
-    else {
-      newList.push(id)
-    }
-    setViewEventId(newList)
-  };
+  // const addEventIdToView = (id: number) => {
+  //   const newList = viewEventId
+  //   if (newList.includes(id)) {
+  //     const index = newList.indexOf(id);
+  //     newList.splice(index, 1);
+  //   }
+  //   else {
+  //     newList.push(id)
+  //   }
+  //   setViewEventId(newList)
+  // };
 
   // const { eventId } = useParams<{ eventId: string }>();
 
