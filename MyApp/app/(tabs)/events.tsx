@@ -197,7 +197,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F44336',
   },
   banner: {
-    position: 'absolute',
     top: 0,
     width: '100%',
     backgroundColor: '#333',
