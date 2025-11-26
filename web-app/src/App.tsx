@@ -7,6 +7,7 @@ import Events from './pages/Events';
 import Create from './pages/Create'
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import EventView from './pages/EventView';
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -35,6 +36,8 @@ function App() {
               {/* Default redirect for logged-in users */}
               <Route path="/" element={<Navigate to="/events" replace />} />
               <Route path="*" element={<Navigate to="/events" replace />} />
+
+              <Route path="/events/:eventId" element={<EventView />} />
             </>
           )}
 
