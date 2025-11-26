@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/components/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Eye, EyeClosed } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,7 +15,6 @@ import {
 interface User {
   user_id: string; // UUID
   username: string;
-  password: string;
   email: string;
   organization: string;
 }
@@ -23,8 +22,11 @@ interface User {
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [openEditor, setOpenEditor] = useState<boolean>(false);
-  const [editField, setEditField] = useState<keyof User | "">("");
+  const [editField, setEditField] = useState<"username" | "password" | "">("");
   const [editText, setEditText] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -37,9 +39,9 @@ export default function Profile() {
       const userId = currentUser.user.id; // UUID from Supabase Auth
 
       const { data, error } = await supabase
-        .from("users")
+        .from("profiles")
         .select("*")
-        .eq("user_id", userId)
+        .eq("profile_id", userId)
         .single();
 
       if (error) {
@@ -52,22 +54,63 @@ export default function Profile() {
     fetchUser();
   }, []);
 
-  const updateUser = async (field: keyof User, value: string) => {
+  const updateUsername = async (value: string) => {
     if (!user) return;
 
+    if (!user?.user_id) {
+      console.error("Cannot update: user_id is missing");
+      return;
+    }
+
     const { error } = await supabase
-      .from("users")
-      .update({ [field]: value } as Partial<User>)
-      .eq("user_id", user.user_id);
+      .from("profiles")
+      .update({ username: value }) // this is correct
+      .eq("profile_id", user.user_id);
+
+    if (!error) {
+      setUser({ ...user, username: value });
+      setOpenEditor(false);
+      setEditText("");
+      setEditField("");
+    } else {
+      console.error("Error updating username:", error);
+    }
+  };
+
+  const validatePassword = (password: string) => {
+    const minLength = /.{10,}/;
+    const upper = /[A-Z]/;
+    const lower = /[a-z]/;
+    const number = /[0-9]/;
+    const special = /[^A-Za-z0-9]/;
+  
+    if (!minLength.test(password)) return "Password must be at least 10 characters long.";
+    if (!upper.test(password)) return "Password must contain at least one uppercase letter.";
+    if (!lower.test(password)) return "Password must contain at least one lowercase letter.";
+    if (!number.test(password)) return "Password must contain at least one number.";
+    if (!special.test(password)) return "Password must contain at least one special character.";
+  
+    return null; // valid password
+  };
+
+  const updatePassword = async (value: string) => {
+    const validationError = validatePassword(value);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: value });
 
     if (error) {
-      console.error("Error updating user:", error);
-    } else {
-      setUser({ ...user, [field]: value });
-      setOpenEditor(false);
-      setEditField("");
-      setEditText("");
+      setErrorMessage(error.message);
+      return;
     }
+  
+    setOpenEditor(false);
+    setEditText("");
+    setEditField("");
+    setErrorMessage("");
   };
 
   if (!user) return <div className="p-6">Loading...</div>;
@@ -79,7 +122,6 @@ export default function Profile() {
 
       <div className="bg-gray-100 rounded-xl shadow-md p-6 max-w-xl w-full space-y-4 text-left">
         <div><strong>Username:</strong> {user.username}</div>
-        <div><strong>Password:</strong> {user.password}</div>
         <div><strong>Email:</strong> {user.email}</div>
         <div><strong>Organization:</strong> {user.organization}</div>
 
@@ -89,7 +131,10 @@ export default function Profile() {
           <div className="mt-4 space-y-2">
             <Select
               value={editField}
-              onValueChange={(value: keyof User) => setEditField(value)}
+              onValueChange={(value) => {
+                setEditField(value as "username" | "password");
+                setErrorMessage("");   // resets validation errors when switching fields
+              }}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select field to edit" />
@@ -99,22 +144,50 @@ export default function Profile() {
                   <SelectLabel>Account Fields</SelectLabel>
                   <SelectItem value="username">Username</SelectItem>
                   <SelectItem value="password">Password</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="organization">Organization</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
 
-            <Textarea
-              placeholder={`Enter new ${editField}`}
-              className="mt-2"
-              value={editText}
-              onChange={(e) => setEditText(e.target.value)}
-            />
+            {editField === "username" && (
+              <input
+                type="text"
+                className="border border-gray-300 rounded-md p-2 w-full"
+                placeholder="Enter new username"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+              />
+            )}
+
+            {editField === "password" && (
+              <div className="relative w-full">
+              <input
+                type={showPassword ? "text" : "password"}
+                className="border border-gray-300 rounded-md p-2 w-full pr-10"
+                placeholder="Enter new password"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+              />
+          
+              <button
+                type="button"
+                className="absolute inset-y-0 right-2 flex items-center text-gray-500"
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? <EyeClosed size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            )}
+
+            {errorMessage && (
+                  <div className="text-red-600 text-sm">{errorMessage}</div>
+                )}
 
             <Button
               onClick={() => {
-                if (editField) updateUser(editField, editText);
+                if (!editField || !editText) return;
+                
+                if (editField === "username") updateUsername(editText);
+                if (editField === "password") updatePassword(editText);
               }}
             >
               Save Changes
