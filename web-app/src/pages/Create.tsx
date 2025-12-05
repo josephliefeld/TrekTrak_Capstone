@@ -67,7 +67,6 @@ export default function Create() {
   // tiers
   const [numTiers, setNumTiers] = React.useState<string>("0");
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
-  const [tierIcons, setTierIcons] = React.useState<string[]>([]);
 
   // allows going to another page
   const navigate = useNavigate();
