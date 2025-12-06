@@ -45,6 +45,7 @@ export default function Create() {
   const [eventType, setEventType] = React.useState("");
   const [fileName, setFileName] = React.useState("No file chosen");
   const [fileError, setFileError] = React.useState("");
+  const [bannerFile, setBannerFile] = React.useState<File | null>(null);
 
   // CALENDAR INFORMATION
   // dates
@@ -98,6 +99,7 @@ export default function Create() {
     if (!file) {
       setFileName("No file chosen");
       setFileError("");
+      setBannerFile(null);
       return;
     }
 
@@ -105,6 +107,7 @@ export default function Create() {
     if (!allowedTypes.includes(file.type)) {
       setFileError("Only PNG or JPG images are allowed.");
       setFileName("No file chosen");
+      setBannerFile(null);
       return;
     }
 
@@ -112,11 +115,13 @@ export default function Create() {
     if (file.size > maxSize) {
       setFileError("File is too large. Maximum size is 2MB.");
       setFileName("No file chosen");
+      setBannerFile(null);
       return;
     }
 
     setFileError("");
     setFileName(file.name);
+    setBannerFile(file);
   };
 
   // helper function that formats a JS date object
@@ -139,11 +144,36 @@ export default function Create() {
     return !isNaN(date.getTime())
   }
 
+  // this sends the form details/files to supabase to be stored under a new 
+  // event/tier configuration
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let banner_url = null;
+      if(bannerFile) {
+        const filePath = `banner/${Date.now()}_${bannerFile.name}`;
+
+        const {data: storageData, error: storageError } = await supabase
+          .storage
+          .from("banner-images")
+          .upload(filePath, bannerFile);
+        
+        if(storageError) {
+          alert ("Banner upload failed: " + storageError.message);
+          setIsSubmitting(false);
+          return;
+        }
+
+        // set banner_url
+        const { data: urlData } = supabase
+          .storage 
+          .from("banner-images")
+          .getPublicUrl(filePath);
+
+        banner_url = urlData.publicUrl;
+      }
       // convert dates to strings of format YYYY-MM-DD
       const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
       const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
@@ -160,6 +190,7 @@ export default function Create() {
             end_date,
             is_private: isPrivate,
             num_tiers: numTiers,
+            banner_url: banner_url
           },
         );
         // .select() // optional: returns inserted rows
