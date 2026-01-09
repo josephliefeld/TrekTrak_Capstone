@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+
+import ParallaxScrollView from '../../components/parallax-scroll-view';
+import { ThemedText } from '../../components/themed-text';
+import { ThemedView } from '../../components/themed-view';
+
 
 // Type for leaderboard entries (will match your Supabase schema later)
 interface LeaderboardEntry {
