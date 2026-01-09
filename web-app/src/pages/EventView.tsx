@@ -1,4 +1,4 @@
-// import { Outlet, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from "@/components/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -56,34 +56,35 @@ export default function EventView() {
 
   const { eventId } = useParams();
 
+  const fetchEvents = async () => {
+    if (!eventId) return;
+
+    const { data, error } = await supabase.from("events")
+    .select("*")
+    .eq('event_id', eventId).single();
+    if (error) {
+      console.error("Error fetching events:", error);
+    } else {
+      setEvent(data);
+    }
+  };
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      if (!eventId) return;
-
-      const { data, error } = await supabase.from("events")
-      .select("*")
-      .eq('event_id', eventId).single();
-      if (error) {
-        console.error("Error fetching events:", error);
-      } else {
-        setEvent(data);
-      }
-    };
     fetchEvents();
   }, [eventId]);
 
-useEffect(() => {
-  if (!event) return;
+  useEffect(() => {
+    if (!event) return;
 
-  setTitle(event.event_name);
-  setDescription(event?.event_description);
-  // setStartDate(event.start_date);
-  // setEndDate(event.end_date);
-  setIsPrivate(event.is_private);
-  setEventType(event.event_type);
-  setIsPublished(event.is_published);
-}, [event]);
+    setTitle(event.event_name);
+    setDescription(event?.event_description);
+    // Parse dates as UTC to avoid timezone issues
+    setStartDate(new Date(event.start_date + 'T00:00:00Z'));
+    setEndDate(new Date(event.end_date + 'T00:00:00Z'));
+    setIsPrivate(event.is_private);
+    setEventType(event.event_type);
+    setIsPublished(event.is_published);
+  }, [event]);
 
 
 
@@ -101,7 +102,7 @@ useEffect(() => {
   const [fileName, setFileName] = React.useState("No file chosen");
   const [fileError, setFileError] = React.useState("");
 
-const [openEditor, setOpenEditor] = useState<boolean>(false);
+  const [openEditor, setOpenEditor] = useState<boolean>(false);
 
   const navigate = useNavigate();
 
@@ -137,40 +138,33 @@ const [openEditor, setOpenEditor] = useState<boolean>(false);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // convert dates to strings of format YYYY-MM-DD
-    const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
-    const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
+    // convert dates to strings of format YYYY-MM-DD (in local timezone)
+    const start_date = startDate ? startDate.toLocaleDateString('en-CA') : null;
+    const end_date = endDate ? endDate.toLocaleDateString('en-CA') : null;
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert([
-        {
-          organizer: "Default Organizer",
-          event_name: title,
-          event_type: eventType,
-          is_private: isPrivate,
-          start_date,
-          end_date,
-          event_description: description,
-          is_published: isPublished,
-        },
-      ]);
+    await updateEvent(event!.event_id, start_date, end_date);
 
-      if(error) {
-        console.log("Error creating event: ", error.message);
-        alert("Failed to add event: " + error.message);
-      } else {
-        alert("Event added successfully!");
-        console.log("Inserted:", data);
-        // Optionally clear the form
-        setTitle("");
-        setDescription("");
-        setEventType("");
-        setIsPrivate(false);
-        setIsPublished(false);
-        setStartDate(undefined);
-        setEndDate(undefined);
-      }
+    setOpenEditor(false);
+
+    //Call fetchEvents to Refresh page data
+    await fetchEvents();
+
+
+    //   if(error) {
+    //     console.log("Error creating event: ", error.message);
+    //     alert("Failed to add event: " + error.message);
+    //   } else {
+    //     alert("Event added successfully!");
+    //     console.log("Inserted:", data);
+    //     // Optionally clear the form
+    //     setTitle("");
+    //     setDescription("");
+    //     setEventType("");
+    //     setIsPrivate(false);
+    //     setIsPublished(false);
+    //     setStartDate(undefined);
+    //     setEndDate(undefined);
+    //   }
   };
 
 
@@ -185,16 +179,25 @@ const [openEditor, setOpenEditor] = useState<boolean>(false);
 
 
 
-  // const updateEvent = async (id: number, edit_value: string, event_col: string) => {
-  //   const {error} = await supabase
-  //   .from('events')
-  //   .update({[event_col]: edit_value})
-  //   .eq('id', id)
+  const updateEvent = async (id: number, start_date: string | null, end_date: string | null) => {
+    const {error} = await supabase
+    .from('events')
+    .update({
+      event_name: title,
+      event_type: eventType,
+      is_private: isPrivate,
+      start_date: start_date,
+      end_date: end_date,
+      event_description: description,
+      is_published: isPublished,
 
-  //   if (error) {
-  //     console.error("Error updating event: ", error);
-  //   }
-  // };
+  })
+    .eq('event_id', id)
+
+    if (error) {
+      console.error("Error updating event: ", error);
+    }
+  };
 
 
   // const addEventIdToView = (id: number) => {
@@ -217,192 +220,33 @@ const [openEditor, setOpenEditor] = useState<boolean>(false);
       <h1 className='font-bold text-3xl'>{event?.event_name}</h1>
       
       <div>
+        <nav className="p-4 bg-gray-100 flex gap-4">
+          <Link to={`/events/participants/${event?.event_id}`}>Participants</Link>
+          <Link to="teams">Teams</Link>
+          <Link to="statistics">Statistics</Link>
+          <Link to={`/events/edit/${event?.event_id}`}> Edit</Link>
+        </nav>
 
-        <h2>Event Description</h2>
-        <p>{event?.is_private ? "Private Event" : "Public Event"}</p>
-        <p>Event Type: {event?.event_type} </p>
-        <p>{event?.event_description}</p>
-        <p>Start Date: {event?.start_date}</p>
-        <p>End Date: {event?.end_date}</p>
+    
+        <div className='bg-gray-100 p-4 rounded m-4'>
+          <h2 className='font-bold'>Event Description</h2>
+          <p>{event?.event_description}</p>
 
+        </div>
 
-
-        <Button onClick={() => {setOpenEditor(!openEditor)}}>Edit Event</Button>
+        
+        <div className='bg-gray-100 p-4 rounded m-4'>
+          <p>{event?.is_private ? "Private Event" : "Public Event"}</p>
+          <p>{event?.is_published ? "Published": "Not Published"}</p>
+          <p>Event Type: {event?.event_type} </p>
+          <p>Start Date: {event?.start_date}</p>
+          <p>End Date: {event?.end_date}</p>
+        </div>
 
 
       </div>
 
-      {openEditor &&
-      <form onSubmit={handleSubmit}>
-        <FieldGroup>
-          <FieldSet>
-            <FieldLegend>Add Event Details</FieldLegend>
-            {/* <FieldDescription>
-              Add event information
-            </FieldDescription> */}
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="title">Event Title</FieldLabel>
-                <input
-                  id="title"
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="banner">Banner Image</FieldLabel>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    id="banner"
-                    accept=".png, .jpeg, .jpg"
-                    className="hidden"
-                    onChange={handleValidatedFileChange}
-                  />
-                  <label
-                    htmlFor="banner"
-                    className="px-1 py-1 w-[64] border border-gray-300 text-sm"
-                  >
-                    Choose File
-                  </label>
-                  <span className="text-sm text-gray-600">{fileName}</span>
-                </div>
-                {fileError && (
-                  <p className="text-sm text-red-500 mt-1">{fileError}</p>
-                )}
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="description">Event Description</FieldLabel>
-                <Textarea 
-                  id="description"
-                  placeholder="Description"
-                  required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </Field>
-              <div className="w-[200px]">
-                <Field>
-                  <FieldLabel htmlFor="type">Event Type</FieldLabel>
-                  <Select value={eventType} onValueChange={(value) => setEventType(value)}>
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="--" />
-                    </SelectTrigger>
-                    <SelectContent >
-                      <SelectItem value="default">--</SelectItem>
-                      <SelectItem value="steps">Steps</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-              <div className="flex gap-6">
-                <Field>
-                  <FieldLabel>Start Date</FieldLabel>
-                    <Popover open={startOpen} onOpenChange={setStartOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          id="date"
-                          className="w-48 justify-between font-normal"
-                        >
-                          {startDate ? startDate.toLocaleDateString() : "Select start date"}
-                          <ChevronDownIcon />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          captionLayout="dropdown"
-                          onSelect={(date) => {
-                            setStartDate(date)
-                            setStartOpen(false)
-                          }}
-                          // NEED TO FIX DATE RANGE
-                          // disabled={{
-                          //   before: new Date(2000, 0, 1),
-                          //   after: new Date(2035, 11, 31),
-                          // }}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                </Field>
-                <Field>
-                  <FieldLabel>End Date</FieldLabel>
-                  <Popover open={endOpen} onOpenChange={setEndOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        id="date"
-                        className="w-48 justify-between font-normal"
-                      >
-                        {endDate ? endDate.toLocaleDateString() : "Select end date"}
-                        <ChevronDownIcon />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        captionLayout="dropdown"
-                        onSelect={(date) => {
-                          setEndDate(date)
-                          setEndOpen(false)
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </Field>
-              </div>
-              <Field>
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="make-private"
-                    className="w-[16px]"
-                    // onClick={() => {console.log("Selected Make Private")}}
-                    checked={isPrivate}
-                    onCheckedChange={(checked) => setIsPrivate(!!checked)}
-                  />
-                  <div className="grid gap-2">
-                    <Label htmlFor="make-private">
-                      Make Private
-                    </Label>
-                    <p className="text-muted-foreground text-sm">
-                      Make event private so only approved users can join.
-                    </p>
-                  </div>
-                </div>
-              </Field>
-              <Field>
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="publish"
-                    className="w-[16px]"
-                    // onClick={() => {console.log("Selected Publish")}}
-                    checked={isPublished}
-                    onCheckedChange={(checked) => setIsPublished(!!checked)}
-                  />
-                  <div className="grid gap-2">
-                    <Label htmlFor="publish">
-                      Publish Event
-                    </Label>
-                    <p className="text-muted-foreground text-sm">
-                      Allow users to view and register for this event.
-                    </p>
-                  </div>
-                </div>
-              </Field>
-              <Field orientation="horizontal">
-                <Button type="submit" onClick={() => {console.log("Event Saved")}}>Save</Button>
-                <Button variant="outline" type="button" onClick={() => navigate("/events")}>Cancel</Button>
-              </Field>
-            </FieldGroup>
-          </FieldSet>
-        </FieldGroup>
-      </form>
-}
+      
 
 
       

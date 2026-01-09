@@ -7,7 +7,42 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { HelloWave } from '@/components/hello-wave';
 
+
+import { supabase } from "@/components/lib/supabase";
+import { useEffect, useState } from 'react'
+
+type Event = {
+  event_id: number;
+  organizer: string;
+  event_name: string;
+  event_type: string;
+  is_private: boolean;
+  start_date: string;
+  end_date: string;
+  event_description: string;
+  is_publshed: boolean;
+};
+
+
 export default function HomeScreen() {
+
+  //-----------------------------------------------------------------------------
+    const[events, setEvents] = useState<Event[]>([]);
+    useEffect(() => {
+      fetchEvents();
+    }, []);
+
+    const fetchEvents = async () => {
+        const { data, error } = await supabase.from<"events", Event>("events").select("*");
+        if (error) {
+          console.error("Error fetching events:", error);
+        } else {
+          setEvents(data ?? []);
+        }
+    };
+  //----------------------------------------------------------------------------- 
+
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -46,6 +81,14 @@ export default function HomeScreen() {
         <Link href="/stats" style={styles.linkButton}>
           <ThemedText type="subtitle" style={styles.linkText}>📊 Stats</ThemedText>
         </Link>
+      </ThemedView>
+
+      {/* Events List */}
+      <ThemedView>
+        <ThemedText type="subtitle">Upcoming Events</ThemedText>
+        {events.map((event) => (
+          <ThemedText key={event.event_id}>{event.event_name}</ThemedText>
+        ))}
       </ThemedView>
 
     </ParallaxScrollView>
