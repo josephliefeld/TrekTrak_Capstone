@@ -10,8 +10,8 @@
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "moduleResolution": "bundler",
-    "types": ["vite/client"],
+    "types": ["react", "react-native"],
     "skipLibCheck": true
   },
   "include": ["src"]
-}
+} 
