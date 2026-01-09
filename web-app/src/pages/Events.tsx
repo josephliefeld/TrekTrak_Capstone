@@ -18,6 +18,9 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 
 import React from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 type Event = {
@@ -36,12 +39,14 @@ export default function Events() {
   const[openEditor, setOpenEditor] = useState<number | null>(null);
   const [text, setText] = useState("");
   const [viewEventId, setViewEventId] = useState<number[]>([]);
-  const [eventCol, setEventCol] = useState<string>("");
+  const [searchCol, setSearchCol] = useState<string>("event_name");
 
   const[events, setEvents] = useState<Event[]>([]);
 
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = React.useState<Date | undefined>();
+
+  const [search, setSearch] = useState<string>("");
 
 
   useEffect(() => {
@@ -86,6 +91,17 @@ export default function Events() {
     );
   };
 
+  const checkDateInRange = (eventDateStr: string, startDate?: Date, endDate?: Date) => {
+    const eventDate = new Date(eventDateStr);
+    if (startDate && eventDate < startDate) return false;
+    if (endDate && eventDate > endDate) return false;
+    return true;
+  }
+
+  const filteredEvents = events.filter(event =>
+    String(event[searchCol as keyof Event]).toLowerCase().includes(search.toLowerCase())
+  );
+
 
   return (
     <>
@@ -94,98 +110,103 @@ export default function Events() {
       </div>
       <div className='flex flex-col items-start gap-2'>
         <p>View all past, present, and future events.</p>
-        {/* <Button variant="link">
-          <Link to="view-and-edit">View Event 1</Link>
-        </Button> */}
+
+      {/* Search Bar*/}
+      <div className='w-2/3 flex'>
+        <Select onValueChange={(value) => setSearchCol(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Search by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Event Columns</SelectLabel>
+              <SelectItem value="event_name">Event Name</SelectItem>
+              <SelectItem value="event_description">Description</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <Textarea
+          placeholder="Search events by name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className='rounded-xl  min-h-0 h-auto resize-none'
+        />
+
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">Filter</Button>
+          </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="leading-none font-medium">Search Filter</h4>
+                  <p className="text-muted-foreground text-sm">
+                    Filter events by start and end date
+                  </p>
+                </div>
+                  <div className="flex  gap-3">
+                    <Checkbox id="ongoing" className='bg-red-100' />
+                    <Label htmlFor="ongoing">Ongoing</Label>
+
+                    <Checkbox id="terms" className='bg-red-100' />
+                    <Label htmlFor="terms">Past</Label>
+                  </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+      </div>
 
         <Table className='table-fixed'>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className='text-center'>Event Name</TableHead>
-                      <TableHead className='text-center'>Organizer</TableHead>
-                      <TableHead></TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-        
-                  <TableBody>
-                    {events.map((event) => (
-                      <React.Fragment key={event.event_id}>
-                        <TableRow>
-                          <TableCell>
-                            <Link to={`/events/${event.event_id}`}>{event.event_name}</Link>
-                          </TableCell>
-                          <TableCell>{event.organizer}</TableCell>
-                          <TableCell>
-                            <Button onClick={() => setOpenEditor(event.event_id)}>Edit</Button>
-                          </TableCell>
-                          <TableCell>
-                            <Button onClick={() => addEventIdToView(event.event_id)}>View</Button>
-                          </TableCell>
-                        </TableRow>
-        
-                        {/* Shows rest of event details */}
-                        {viewEventId.includes(event.event_id) && (
-                          <TableRow>
-                            <TableCell colSpan={4}>
-                              <p>{event.is_private ? "Private Event" : "Public Event"}</p>
-                              <p>Event Type: {event.event_type} </p>
-                              <p>{event.event_description}</p>
-                              <p>Start Date: {event.start_date}</p>
-                              <p>End Date: {event.end_date}</p>
-                            </TableCell>
-                          </TableRow>
-                        )}
-        
-                      </React.Fragment>
-                    ))}
-        
-                  </TableBody>
-        
-                </Table>
-        
-                
-                {openEditor && 
-                (<div className='w-full'> Edit Event Name for {openEditor} 
-                  <Select value={eventCol} onValueChange={(value) => setEventCol(value)}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Edit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Event</SelectLabel>
-                        <SelectItem value="event_name">Name</SelectItem>
-                        <SelectItem value="event_description">Description</SelectItem>
-                        <SelectItem value="event_type">Event Type</SelectItem>
-                        <SelectItem value="start_date">Start Date</SelectItem>
-                        <SelectItem value="end_date">End Date</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+          <TableHeader>
+            <TableRow>
+              <TableHead className='text-center'>Event Name</TableHead>
+              <TableHead className='text-center'>Organizer</TableHead>
+              <TableHead></TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
 
+          <TableBody>
+            {filteredEvents.map((event) => (
+              <React.Fragment key={event.event_id}>
+                <TableRow>
+                  <TableCell>
+                    <Link to={`/events/${event.event_id}`}>{event.event_name}</Link>
+                  </TableCell>
+                  <TableCell>{event.organizer}</TableCell>
+                  <TableCell>
+                    {/* <Button onClick={() => setOpenEditor(event.event_id)}>Edit</Button> */}
+                    <Link to={`/events/edit/${event.event_id}`}>
+                      <Button>Edit</Button>
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Button onClick={() => addEventIdToView(event.event_id)}>View</Button>
+                  </TableCell>
+                </TableRow>
 
-                  {(eventCol === "start_date" || eventCol === "end_date") ? (
-               
-                          <Calendar
-                            mode="single"
-                            selected={eventCol === "start_date" ? startDate : endDate}
-                            onSelect={eventCol === "start_date" ? setStartDate : setEndDate}
-                            className="rounded-md border shadow-sm"
-                            captionLayout="dropdown"
-                          />
-                    ) : 
-                    (<Textarea
-                      placeholder={eventCol}
-                      className="mb-2 mt-2"
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                    /> )}
-
-                  <Button onClick={() => {updateEvent(openEditor, text, eventCol); setOpenEditor(null)}} className='mr-10'>Save Changes</Button>
-
-                  <Button onClick={() => setOpenEditor(null)}>Cancel</Button>
-                </div>
+                {/* Shows rest of event details */}
+                {viewEventId.includes(event.event_id) && (
+                  <TableRow>
+                    <TableCell colSpan={4}>
+                      <p>{event.event_description}</p>
+                      <p>{event.is_private ? "Private Event" : "Public Event"}</p>
+                      <p>Event Type: {event.event_type} </p>
+                      <p>Start Date: {event.start_date}</p>
+                      <p>End Date: {event.end_date}</p>
+                    </TableCell>
+                  </TableRow>
                 )}
+
+              </React.Fragment>
+            ))}
+
+          </TableBody>
+
+        </Table>
+
+                
         <Outlet /> 
       </div>
     </>
