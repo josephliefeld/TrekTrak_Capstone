@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Field,
+  FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -63,8 +64,31 @@ export default function Create() {
   const [isPrivate, setIsPrivate] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // tiers
+  const [numTiers, setNumTiers] = React.useState<string>("0");
+  const [tierLevels, setTierLevels] = React.useState<number[]>([]);
+
   // allows going to another page
   const navigate = useNavigate();
+
+  const handleTiersSelect = (value: string) => {
+    setNumTiers(value);
+    const n = parseInt(value, 10);
+    setTierLevels(prev => {
+      const newValues = prev.slice(0, n);
+      while(newValues.length < n) newValues.push(0);
+      return newValues;
+    });
+  };
+
+  // Handle individual input change
+  const handleInputChange = (index: number, value: number) => {
+    setTierLevels(prev => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  };
 
   const handleValidatedFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -135,6 +159,7 @@ export default function Create() {
             start_date,
             end_date,
             is_private: isPrivate,
+            num_tiers: numTiers,
           },
         );
         // .select() // optional: returns inserted rows
@@ -252,7 +277,7 @@ export default function Create() {
                       <Input
                         id="date"
                         value={startValue}
-                        placeholder="June 01, 2025"
+                        placeholder="November 11, 2025"
                         className="bg-background pr-10"
                         onChange={(e) => {
                           const date = new Date(e.target.value)
@@ -313,7 +338,7 @@ export default function Create() {
                       <Input
                         id="date"
                         value={endValue}
-                        placeholder="June 01, 2025"
+                        placeholder="November 11, 2025"
                         className="bg-background pr-10"
                         onChange={(e) => {
                           const date = new Date(e.target.value)
@@ -391,8 +416,67 @@ export default function Create() {
           {/* FieldSet for Tier Configuration */}
           <FieldSet>
             <FieldLegend>Tier Configuration</FieldLegend>
+            <FieldDescription>
+              <p>
+                Use the dropdown menu to select how many tiers your event will have (between 0 and 5). For each tier, enter the number of steps required to reach that tier.
+              </p>  
+            </FieldDescription>
             <FieldGroup>
+              {/* Dropdown selector for the number of tiers */}
+              <div className="w-[200px]">
+                <Field>
+                  <FieldLabel htmlFor="numTiers">Number of Tiers</FieldLabel>
+                  <Select onValueChange={handleTiersSelect} value={numTiers}>
+                    <SelectTrigger id="numTiers">
+                      <SelectValue placeholder="0" />
+                    </SelectTrigger>
+                    <SelectContent >
+                      <SelectItem value="0">0</SelectItem>
+                      <SelectItem value="1">1</SelectItem>
+                      <SelectItem value="2">2</SelectItem>
+                      <SelectItem value="3">3</SelectItem>
+                      <SelectItem value="4">4</SelectItem>
+                      <SelectItem value="5">5</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="space-y-2">
+                    {Array.from({length: parseInt(numTiers, 10)}).map((_, index) => (
+                      <div key={index}>
+                        {/* Displays a number input box for each tier */}
+                        <Label htmlFor={`input-${index}`}>Level {index + 1}</Label>
+                        <Input
+                          id={`level-${index}`}
+                          type="number"
+                          value={tierLevels[index] || ''}
+                          placeholder={(1000*(index+1)).toString()}
+                          onChange={(e) => handleInputChange(index, parseInt(e.target.value, 10))}
+                        />
 
+                        {/* Displays a file (image) upload input for each tier */}
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="file"
+                            id={`icon-${index}`}
+                            accept=".png, .jpeg, .jpg"
+                            className="hidden"
+                            onChange={handleValidatedFileChange}
+                          />
+                          <label
+                            htmlFor={`icon-${index}`}
+                            className="px-1 py-1 w-[64] border border-gray-300 text-sm"
+                          >
+                            Upload Icon
+                          </label>
+                          <span className="text-sm text-gray-600">{fileName}</span>
+                        </div>
+                        {fileError && (
+                           <p className="text-sm text-red-500 mt-1">{fileError}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Field>
+              </div>
             </FieldGroup>
           </FieldSet>
           {/* Sumbit Button and Cancel Button */}
