@@ -15,7 +15,7 @@ import {
   SelectLabel
 } from "@/components/ui/select"
 
-import { Calendar } from "@/components/ui/calendar"
+//import { Calendar } from "@/components/ui/calendar"
 
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -36,15 +36,15 @@ type Event = {
 };
 
 export default function Events() {
-  const[openEditor, setOpenEditor] = useState<number | null>(null);
-  const [text, setText] = useState("");
+  //const[openEditor, setOpenEditor] = useState<number | null>(null);
+  //const [text, setText] = useState("");
   const [viewEventId, setViewEventId] = useState<number[]>([]);
   const [searchCol, setSearchCol] = useState<string>("event_name");
 
   const[events, setEvents] = useState<Event[]>([]);
 
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = React.useState<Date | undefined>();
+  //const [startDate, setStartDate] = useState<Date | undefined>();
+  //const [endDate, setEndDate] = React.useState<Date | undefined>();
 
   const [search, setSearch] = useState<string>("");
 
@@ -62,7 +62,7 @@ export default function Events() {
         }
     };
 
-  const updateEvent = async (id: number, edit_value: string|null, event_col: string) => {
+  /*const updateEvent = async (id: number, edit_value: string|null, event_col: string) => {
     let new_value = edit_value;
     if (event_col === "start_date") {
       new_value = startDate ? startDate.toISOString().split("T")[0] : null;
@@ -81,7 +81,7 @@ export default function Events() {
     }
 
     fetchEvents();
-  };
+  };*/
 
   const addEventIdToView = (id: number) => {
     setViewEventId((prev) =>
@@ -91,12 +91,12 @@ export default function Events() {
     );
   };
 
-  const checkDateInRange = (eventDateStr: string, startDate?: Date, endDate?: Date) => {
+  /*const checkDateInRange = (eventDateStr: string, startDate?: Date, endDate?: Date) => {
     const eventDate = new Date(eventDateStr);
     if (startDate && eventDate < startDate) return false;
     if (endDate && eventDate > endDate) return false;
     return true;
-  }
+  }*/
 
   const filteredEvents = events.filter(event =>
     String(event[searchCol as keyof Event]).toLowerCase().includes(search.toLowerCase())

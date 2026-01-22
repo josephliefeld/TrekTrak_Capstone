@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
 import { StyleSheet, TextInput, FlatList, TouchableOpacity, Animated } from 'react-native';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import ParallaxScrollView from '@/src/components/parallax-scroll-view';
+import { ThemedText } from '@/src/components/themed-text';
+import { ThemedView } from '@/src/components/themed-view';
 import { useState, useRef } from 'react';
 
 const sampleEvents = [
