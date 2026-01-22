@@ -1,11 +1,11 @@
 import { useParams } from "react-router-dom";
-import { supabase } from "@/components/lib/supabase/client";
+//import { supabase } from "@/components/lib/supabase/client";
 
 
 
 export default function Participants() {
 
-  const { eventId } = useParams();
+  //const { eventId } = useParams();
   const imageUrl = `http://127.0.0.1:54321/storage/v1/object/public/tier1/Screenshot%202025-12-03%20201532.png`;
 
 
