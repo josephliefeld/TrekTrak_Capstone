@@ -21,11 +21,11 @@ import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { se } from 'date-fns/locale';
-import { Field, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
-import { CalendarIcon, ChevronDownIcon } from 'lucide-react';
-import { parse } from 'date-fns';
+// import { se } from 'date-fns/locale';
+import { Field } from '@/components/ui/field';
+// import { Input } from '@/components/ui/input';
+import { ChevronDownIcon } from 'lucide-react';
+// import { parse } from 'date-fns';
 
 type Event = {
   event_id: number;
@@ -43,7 +43,7 @@ export default function Events() {
   //const[openEditor, setOpenEditor] = useState<number | null>(null);
   //const [text, setText] = useState("");
   const [viewEventId, setViewEventId] = useState<number[]>([]);
-  const [searchCol, setSearchCol] = useState<string>("event_name");
+  // const [searchCol, setSearchCol] = useState<string>("event_name");
 
   const[events, setEvents] = useState<Event[]>([]);
 
@@ -107,13 +107,13 @@ export default function Events() {
     "event_description",
   ]);
 
-  const toggleSearchCol = (col: keyof Event) => {
-    setSearchCols(prevCols =>
-      prevCols.includes(col)
-        ? prevCols.filter(c => c !== col) // remove
-        : [...prevCols, col]              // add
-    );
-  };
+  // const toggleSearchCol = (col: keyof Event) => {
+  //   setSearchCols(prevCols =>
+  //     prevCols.includes(col)
+  //       ? prevCols.filter(c => c !== col) // remove
+  //       : [...prevCols, col]              // add
+  //   );
+  // };
 
   // Checks if event is ongoing - today is between start and end date
   const checkOngoing = (event: Event) => {
@@ -130,7 +130,6 @@ export default function Events() {
   //Checks if event is over = today is after end date
   const checkPast = (event: Event) => {
     const today = new Date();
-    const start = new Date(event.start_date)
     if (event.end_date != null) {
       const end = new Date(event.end_date)
       return today > end;
