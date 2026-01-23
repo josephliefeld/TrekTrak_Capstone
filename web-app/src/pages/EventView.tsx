@@ -1,41 +1,41 @@
 import { Link } from 'react-router-dom';
 import { supabase } from "@/components/lib/supabase/client";
 import { useEffect, useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  // SelectGroup,
-  // SelectLabel
-} from "@/components/ui/select"
+// import { Textarea } from "@/components/ui/textarea";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+//   // SelectGroup,
+//   // SelectLabel
+// } from "@/components/ui/select"
 import React from 'react';
 import { useParams } from "react-router-dom";
-import {
-  Field,
+// import {
+//   Field,
   // FieldContent,
   // FieldDescription,
   // FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
+  // FieldGroup,
+  // FieldLabel,
+  // FieldLegend,
   // FieldSeparator,
-  FieldSet,
+  // FieldSet,
   // FieldTitle,
-} from "@/components/ui/field"
-import { ChevronDownIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { useNavigate } from "react-router-dom";
+// } from "@/components/ui/field"
+// import { ChevronDownIcon } from "lucide-react"
+// import { Button } from "@/components/ui/button"
+// import { Calendar } from "@/components/ui/calendar"
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from "@/components/ui/popover"
+// import { Checkbox } from "@/components/ui/checkbox"
+// import { Label } from "@/components/ui/label"
+// import { useNavigate } from "react-router-dom";
 
 
 
@@ -73,99 +73,99 @@ export default function EventView() {
     fetchEvents();
   }, [eventId]);
 
-  useEffect(() => {
-    if (!event) return;
+  // useEffect(() => {
+  //   if (!event) return;
 
-    setTitle(event.event_name);
-    setDescription(event?.event_description);
-    // Parse dates as UTC to avoid timezone issues
-    setStartDate(new Date(event.start_date + 'T00:00:00Z'));
-    setEndDate(new Date(event.end_date + 'T00:00:00Z'));
-    setIsPrivate(event.is_private);
-    setEventType(event.event_type);
-    setIsPublished(event.is_published);
-  }, [event]);
-
-
-
-  const [startDate, setStartDate] = React.useState<Date | undefined>();
-  const [endDate, setEndDate] = React.useState<Date | undefined>();
-  const [startOpen, setStartOpen] = React.useState(false);
-  const [endOpen, setEndOpen] = React.useState(false);
-
-  const [title, setTitle] = React.useState("");
-  const [description, setDescription] = React.useState("");
-  const [eventType, setEventType] = React.useState("");
-  const [isPrivate, setIsPrivate] = React.useState(false);
-  const [isPublished, setIsPublished] = React.useState(false);
-
-  const [fileName, setFileName] = React.useState("No file chosen");
-  const [fileError, setFileError] = React.useState("");
-
-  const [openEditor, setOpenEditor] = useState<boolean>(false);
-
-  const navigate = useNavigate();
-
-  const handleValidatedFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-
-    if (!file) {
-      setFileName("No file chosen");
-      setFileError("");
-      return;
-    }
-
-    const allowedTypes = ["image/png", "image/jpeg"];
-    if (!allowedTypes.includes(file.type)) {
-      setFileError("Only PNG or JPG images are allowed.");
-      setFileName("No file chosen");
-      return;
-    }
-
-    const maxSize = 2 * 1024 * 1024; // 2MB
-    if (file.size > maxSize) {
-      setFileError("File is too large. Maximum size is 2MB.");
-      setFileName("No file chosen");
-      return;
-    }
-
-    setFileError("");
-    setFileName(file.name);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // convert dates to strings of format YYYY-MM-DD (in local timezone)
-    const start_date = startDate ? startDate.toLocaleDateString('en-CA') : null;
-    const end_date = endDate ? endDate.toLocaleDateString('en-CA') : null;
-
-    await updateEvent(event!.event_id, start_date, end_date);
-
-    setOpenEditor(false);
-
-    //Call fetchEvents to Refresh page data
-    await fetchEvents();
+  //   setTitle(event.event_name);
+  //   setDescription(event?.event_description);
+  //   Parse dates as UTC to avoid timezone issues
+  //   setStartDate(new Date(event.start_date + 'T00:00:00Z'));
+  //   setEndDate(new Date(event.end_date + 'T00:00:00Z'));
+  //   setIsPrivate(event.is_private);
+  //   setEventType(event.event_type);
+  //   setIsPublished(event.is_published);
+  // }, [event]);
 
 
-    //   if(error) {
-    //     console.log("Error creating event: ", error.message);
-    //     alert("Failed to add event: " + error.message);
-    //   } else {
-    //     alert("Event added successfully!");
-    //     console.log("Inserted:", data);
-    //     // Optionally clear the form
-    //     setTitle("");
-    //     setDescription("");
-    //     setEventType("");
-    //     setIsPrivate(false);
-    //     setIsPublished(false);
-    //     setStartDate(undefined);
-    //     setEndDate(undefined);
-    //   }
-  };
+
+  // const [startDate, setStartDate] = React.useState<Date | undefined>();
+  // const [endDate, setEndDate] = React.useState<Date | undefined>();
+  // const [startOpen, setStartOpen] = React.useState(false);
+  // const [endOpen, setEndOpen] = React.useState(false);
+
+  // const [title, setTitle] = React.useState("");
+  // const [description, setDescription] = React.useState("");
+  // const [eventType, setEventType] = React.useState("");
+  // const [isPrivate, setIsPrivate] = React.useState(false);
+  // const [isPublished, setIsPublished] = React.useState(false);
+
+  // const [fileName, setFileName] = React.useState("No file chosen");
+  // const [fileError, setFileError] = React.useState("");
+
+  // const [openEditor, setOpenEditor] = useState<boolean>(false);
+
+  // const navigate = useNavigate();
+
+  // const handleValidatedFileChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const file = e.target.files?.[0];
+
+  //   if (!file) {
+  //     setFileName("No file chosen");
+  //     setFileError("");
+  //     return;
+  //   }
+
+  //   const allowedTypes = ["image/png", "image/jpeg"];
+  //   if (!allowedTypes.includes(file.type)) {
+  //     setFileError("Only PNG or JPG images are allowed.");
+  //     setFileName("No file chosen");
+  //     return;
+  //   }
+
+  //   const maxSize = 2 * 1024 * 1024; // 2MB
+  //   if (file.size > maxSize) {
+  //     setFileError("File is too large. Maximum size is 2MB.");
+  //     setFileName("No file chosen");
+  //     return;
+  //   }
+
+  //   setFileError("");
+  //   setFileName(file.name);
+  // };
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   // convert dates to strings of format YYYY-MM-DD (in local timezone)
+  //   const start_date = startDate ? startDate.toLocaleDateString('en-CA') : null;
+  //   const end_date = endDate ? endDate.toLocaleDateString('en-CA') : null;
+
+  //   await updateEvent(event!.event_id, start_date, end_date);
+
+  //   setOpenEditor(false);
+
+  //   //Call fetchEvents to Refresh page data
+  //   await fetchEvents();
+
+
+  //   //   if(error) {
+  //   //     console.log("Error creating event: ", error.message);
+  //   //     alert("Failed to add event: " + error.message);
+  //   //   } else {
+  //   //     alert("Event added successfully!");
+  //   //     console.log("Inserted:", data);
+  //   //     // Optionally clear the form
+  //   //     setTitle("");
+  //   //     setDescription("");
+  //   //     setEventType("");
+  //   //     setIsPrivate(false);
+  //   //     setIsPublished(false);
+  //   //     setStartDate(undefined);
+  //   //     setEndDate(undefined);
+  //   //   }
+  // };
 
 
 
@@ -179,25 +179,25 @@ export default function EventView() {
 
 
 
-  const updateEvent = async (id: number, start_date: string | null, end_date: string | null) => {
-    const {error} = await supabase
-    .from('events')
-    .update({
-      event_name: title,
-      event_type: eventType,
-      is_private: isPrivate,
-      start_date: start_date,
-      end_date: end_date,
-      event_description: description,
-      is_published: isPublished,
+  // const updateEvent = async (id: number, start_date: string | null, end_date: string | null) => {
+  //   const {error} = await supabase
+  //   .from('events')
+  //   .update({
+  //     event_name: title,
+  //     event_type: eventType,
+  //     is_private: isPrivate,
+  //     start_date: start_date,
+  //     end_date: end_date,
+  //     event_description: description,
+  //     is_published: isPublished,
 
-  })
-    .eq('event_id', id)
+  // })
+  //   .eq('event_id', id)
 
-    if (error) {
-      console.error("Error updating event: ", error);
-    }
-  };
+  //   if (error) {
+  //     console.error("Error updating event: ", error);
+  //   }
+  // };
 
 
   // const addEventIdToView = (id: number) => {
