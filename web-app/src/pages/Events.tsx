@@ -15,13 +15,17 @@ import {
   SelectLabel
 } from "@/components/ui/select"
 
-//import { Calendar } from "@/components/ui/calendar"
+import { Calendar } from "@/components/ui/calendar"
 
 import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-
+import { se } from 'date-fns/locale';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { CalendarIcon, ChevronDownIcon } from 'lucide-react';
+import { parse } from 'date-fns';
 
 type Event = {
   event_id: number;
@@ -98,9 +102,130 @@ export default function Events() {
     return true;
   }*/
 
-  const filteredEvents = events.filter(event =>
-    String(event[searchCol as keyof Event]).toLowerCase().includes(search.toLowerCase())
-  );
+  const [searchCols, setSearchCols] = useState<(keyof Event)[]>([
+    "event_name",
+    "event_description",
+  ]);
+
+  const toggleSearchCol = (col: keyof Event) => {
+    setSearchCols(prevCols =>
+      prevCols.includes(col)
+        ? prevCols.filter(c => c !== col) // remove
+        : [...prevCols, col]              // add
+    );
+  };
+
+  // Checks if event is ongoing - today is between start and end date
+  const checkOngoing = (event: Event) => {
+    const today = new Date();
+    const start = new Date(event.start_date)
+    if (event.end_date != null) {
+      const end = new Date(event.end_date)
+      return today >= start && today <= end;
+    } else {
+      return today >= start;
+    }
+  }
+  
+  //Checks if event is over = today is after end date
+  const checkPast = (event: Event) => {
+    const today = new Date();
+    const start = new Date(event.start_date)
+    if (event.end_date != null) {
+      const end = new Date(event.end_date)
+      return today > end;
+    } else {
+      return false;
+    }   
+  }
+
+  function parseLocalDate(dateString: string) {
+      const [year, month, day] = dateString.split("-").map(Number);
+      return new Date(year, month - 1, day);
+  }
+
+  const checkStartDate = (event: Event) => {
+    const start = parseLocalDate(event.start_date);
+    if (startDateFrom && startDateTo) {
+      return start >= startDateFrom && start <= startDateTo;
+    }
+    else if (startDateFrom !== undefined )  {
+      return start >= startDateFrom;
+    }
+    else if (startDateTo !== undefined )  {
+      return start <= startDateTo;
+    }
+    else {
+      return true;
+    }
+
+  }
+
+  const checkEndDate = (event: Event) => {
+    const end = parseLocalDate(event.end_date);
+    if (endDateFrom && endDateTo) {
+      return end >= endDateFrom && end <= endDateTo;
+    }
+    else if (endDateFrom !== undefined) {
+      return end >= endDateFrom;
+    }
+    else if (endDateTo !== undefined) {
+      return end <= endDateTo;
+    }
+    else {
+      return true;
+    }
+
+  }
+
+  const resetFilters = () => {
+    setOngoingChecked(false);
+    setPastChecked(false);
+    setStartDateFrom(undefined);
+    setStartDateTo(undefined);
+    setEndDateFrom(undefined);
+    setEndDateTo(undefined);
+  }
+  
+
+
+  const [ongoingChecked, setOngoingChecked] = useState<boolean>(false);
+  const [pastChecked, setPastChecked] = useState<boolean>(false);
+
+  const [startFromOpen, setStartFromOpen] = useState(false);
+  const [startToOpen, setStartToOpen] = useState(false);
+
+  const [endFromOpen, setEndFromOpen] = useState(false);
+  const [endToOpen, setEndToOpen] = useState(false);
+
+  const [startDateFrom, setStartDateFrom] = useState<Date | undefined>();
+  const [startDateTo, setStartDateTo] = useState<Date | undefined>();
+
+  const [endDateFrom, setEndDateFrom] = useState<Date | undefined>();
+  const [endDateTo, setEndDateTo] = useState<Date | undefined>();
+
+
+
+  let filteredEvents = (events.filter(event =>
+    searchCols.some(col =>
+      String(event[col]).toLowerCase().includes(search.toLowerCase())
+    )) 
+  );  
+
+  if (ongoingChecked) {
+    filteredEvents = filteredEvents.filter(event => checkOngoing(event));
+  } else if (pastChecked) {
+    filteredEvents = filteredEvents.filter(event => checkPast(event));
+  }
+
+  filteredEvents = filteredEvents.filter(event => checkStartDate(event));
+  filteredEvents = filteredEvents.filter(event => checkEndDate(event));
+
+  
+
+  // const filteredEvents = events.filter(event =>
+  //   String(event[searchCol as keyof Event]).toLowerCase().includes(search.toLowerCase())
+  // );
 
 
   return (
@@ -111,21 +236,29 @@ export default function Events() {
       <div className='flex flex-col items-start gap-2'>
         <p>View all past, present, and future events.</p>
 
-      {/* Search Bar*/}
       <div className='w-2/3 flex'>
-        <Select onValueChange={(value) => setSearchCol(value)}>
+        {/*Search By Filter*/}
+        <Select onValueChange={(value) => {
+          if (value == "all"){
+            setSearchCols(["event_name", "event_description"]);
+          } else {
+            setSearchCols([value as keyof Event]);
+          }
+        }}>
           <SelectTrigger>
             <SelectValue placeholder="Search by" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               <SelectLabel>Event Columns</SelectLabel>
+              <SelectItem value="all">All</SelectItem>
               <SelectItem value="event_name">Event Name</SelectItem>
               <SelectItem value="event_description">Description</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
 
+        {/* Search Bar*/}
         <Textarea
           placeholder="Search events by name..."
           value={search}
@@ -133,6 +266,7 @@ export default function Events() {
           className='rounded-xl  min-h-0 h-auto resize-none'
         />
 
+        {/*Ongoing or Past Events and Start End Date*/}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">Filter</Button>
@@ -146,12 +280,126 @@ export default function Events() {
                   </p>
                 </div>
                   <div className="flex  gap-3">
-                    <Checkbox id="ongoing" className='bg-red-100' />
+                    <Checkbox id="ongoing" className='bg-red-100' checked={ongoingChecked} onCheckedChange={(checked) => setOngoingChecked(Boolean(checked))}
+/>
                     <Label htmlFor="ongoing">Ongoing</Label>
 
-                    <Checkbox id="terms" className='bg-red-100' />
-                    <Label htmlFor="terms">Past</Label>
+                    <Checkbox id="past" className='bg-red-100' checked={pastChecked} onCheckedChange={(checked) => setPastChecked(Boolean(checked))} />
+                    <Label htmlFor="past">Past</Label>
                   </div>
+                  {/* Start Date Filter */}
+                  <Label>Start Date</Label>
+                  <div className='flex flex-row gap-2'>
+                    <Field >
+                        <Popover open={startFromOpen} onOpenChange={setStartFromOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date"
+                              className="w-48 justify-between font-normal"
+                            >
+                              {startDateFrom ? startDateFrom.toLocaleDateString() : "Start From"}
+                              <ChevronDownIcon />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={startDateFrom}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                setStartDateFrom(date)
+                                setStartFromOpen(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </Field>
+                      <Field >
+                        <Popover open={startToOpen} onOpenChange={setStartToOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date"
+                              className="w-48 justify-between font-normal"
+                            >
+                              {startDateTo ? startDateTo.toLocaleDateString() : "Start To"}
+                              <ChevronDownIcon />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={startDateTo}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                setStartDateTo(date)
+                                setStartToOpen(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </Field>                 
+                  </div>
+                  {/* End Date Filter */}
+                  <Label>End Date</Label>
+                  <div className='flex flex-row gap-2'>
+                    <Field >
+                        <Popover open={endFromOpen} onOpenChange={setEndFromOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date"
+                              className="w-48 justify-between font-normal"
+                            >
+                              {endDateFrom ? endDateFrom.toLocaleDateString() : "End From"}
+                              <ChevronDownIcon />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={endDateFrom}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                setEndDateFrom(date)
+                                setEndFromOpen(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </Field>
+
+                      <Field >
+                        <Popover open={endToOpen} onOpenChange={setEndToOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              id="date"
+                              className="w-48 justify-between font-normal"
+                            >
+                              {endDateTo ? endDateTo.toLocaleDateString() : "End To"}
+                              <ChevronDownIcon />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={endDateTo}
+                              captionLayout="dropdown"
+                              onSelect={(date) => {
+                                setEndDateTo(date)
+                                setEndToOpen(false)
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </Field>
+                    
+                    
+                  </div>
+
+                  <Button onClick={resetFilters}>Reset</Button>
               </div>
             </PopoverContent>
           </Popover>

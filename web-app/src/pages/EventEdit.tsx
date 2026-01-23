@@ -31,6 +31,8 @@ import {
   // SelectGroup,
   // SelectLabel
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { CalendarIcon } from "lucide-react"
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -66,6 +68,33 @@ export default function EventEdit() {
     const [fileName, setFileName] = React.useState("No file chosen");
     const [fileError, setFileError] = React.useState("");
 
+    const initialDate = new Date("2025-06-01")
+
+    const [startMonth, setStartMonth] = React.useState<Date | undefined>(initialDate)
+    const [endMonth, setEndMonth] = React.useState<Date | undefined>(initialDate)
+    
+    const [startValue, setStartValue] = React.useState("");
+    const [endValue, setEndValue] = React.useState("");
+
+
+    function isValidDate(date: Date | undefined) {
+      if (!date) {
+        return false
+      }
+      return !isNaN(date.getTime())
+    }
+    
+    function formatDate(date: Date | undefined) {
+      if (!date) {
+        return ""
+      }
+      return date.toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    }
+    
     const navigate = useNavigate();
 
 
@@ -84,6 +113,9 @@ export default function EventEdit() {
         setIsPrivate(event.is_private);
         setEventType(event.event_type);
         setIsPublished(event.is_published);
+
+        setStartValue(formatDate(parseLocalDate(event.start_date)));
+        setEndValue(formatDate(parseLocalDate(event.end_date)));
     }, [event]);
 
     const fetchEvents = async () => {
@@ -231,63 +263,128 @@ export default function EventEdit() {
                   </Select>
                 </Field>
               </div>
-              <div className="flex gap-6">
+              <div className="flex gap-6">                
+                {/* Start Date Field */}
                 <Field>
-                  <FieldLabel>Start Date</FieldLabel>
-                    <Popover open={startOpen} onOpenChange={setStartOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          id="date"
-                          className="w-48 justify-between font-normal"
-                        >
-                          {startDate ? startDate.toLocaleDateString() : "Select start date"}
-                          <ChevronDownIcon />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          captionLayout="dropdown"
-                          onSelect={(date) => {
-                            setStartDate(date)
-                            setStartOpen(false)
-                          }}
-                          // NEED TO FIX DATE RANGE
-                          // disabled={{
-                          //   before: new Date(2000, 0, 1),
-                          //   after: new Date(2035, 11, 31),
-                          // }}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                </Field>
-                <Field>
-                  <FieldLabel>End Date</FieldLabel>
-                  <Popover open={endOpen} onOpenChange={setEndOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
+                  <div className="flex flex-col gap-3">
+                    <Label htmlFor="date" className="px-1">
+                      Start Date
+                    </Label>
+                    <div className="relative flex gap-2">
+                      <Input
                         id="date"
-                        className="w-48 justify-between font-normal"
-                      >
-                        {endDate ? endDate.toLocaleDateString() : "Select end date"}
-                        <ChevronDownIcon />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        captionLayout="dropdown"
-                        onSelect={(date) => {
-                          setEndDate(date)
-                          setEndOpen(false)
+                        value={ startValue }
+                        placeholder="November 11, 2025"
+                        className="bg-background pr-10"
+                        onChange={(e) => {
+                          const date = new Date(e.target.value)
+                          setStartValue(e.target.value)
+                          if (isValidDate(date)) {
+                            setStartDate(date)
+                            setStartMonth(date)
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault()
+                            setStartOpen(true)
+                          }
                         }}
                       />
-                    </PopoverContent>
-                  </Popover>
+                      <Popover open={startOpen} onOpenChange={setStartOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="date-picker"
+                            variant="ghost"
+                            className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                          >
+                            <CalendarIcon className="size-3.5" />
+                            <span className="sr-only">Select date</span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0"
+                          align="end"
+                          alignOffset={-8}
+                          sideOffset={10}
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={startDate}
+                            captionLayout="dropdown"
+                            month={startMonth}
+                            onMonthChange={setStartMonth}
+                            onSelect={(date) => {
+                              setStartDate(date)
+                              setStartValue(formatDate(date))
+                              setStartOpen(false)
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </Field>
+                {/* End Date Field */}
+                <Field>
+                  <div className="flex flex-col gap-3">
+                    <Label htmlFor="date" className="px-1">
+                      End Date
+                    </Label>
+                    <div className="relative flex gap-2">
+                      <Input
+                        id="date"
+                        value={endValue}
+                        placeholder="November 11, 2025"
+                        className="bg-background pr-10"
+                        onChange={(e) => {
+                          const date = new Date(e.target.value)
+                          setEndValue(e.target.value)
+                          if (isValidDate(date)) {
+                            setEndDate(date)
+                            setEndMonth(date)
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault()
+                            setEndOpen(true)
+                          }
+                        }}
+                      />
+                      <Popover open={endOpen} onOpenChange={setEndOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="date-picker"
+                            variant="ghost"
+                            className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                          >
+                            <CalendarIcon className="size-3.5" />
+                            <span className="sr-only">Select date</span>
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0"
+                          align="end"
+                          alignOffset={-8}
+                          sideOffset={10}
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={endDate}
+                            captionLayout="dropdown"
+                            month={endMonth}
+                            onMonthChange={setEndMonth}
+                            onSelect={(date) => {
+                              setEndDate(date)
+                              setEndValue(formatDate(date))
+                              setEndOpen(false)
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
                 </Field>
               </div>
               <Field>
