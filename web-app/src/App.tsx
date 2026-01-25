@@ -8,6 +8,8 @@ import Create from './pages/Create'
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import EventView from './pages/EventView';
+import EventEdit from './pages/EventEdit';
+import Participants from './pages/Participants';
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -38,6 +40,8 @@ function App() {
               <Route path="*" element={<Navigate to="/events" replace />} />
 
               <Route path="/events/:eventId" element={<EventView />} />
+              <Route path="/events/edit/:eventId" element={<EventEdit />} />
+              <Route path="/events/participants/:eventId" element={<Participants />} />
             </>
           )}
 
