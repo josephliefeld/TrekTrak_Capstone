@@ -18,16 +18,41 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
 
+    if (authError || !authData?.user) {
+      setLoading(false)
+      Alert.alert('Login failed', authError?.message ?? 'No user returned')
+      return
+    }
+
+    const userID = authData.user.id
+
+    const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+      .select('role')
+      .eq('profile_id', userID)
+      .single()
+
     setLoading(false)
 
-    if (error) {
-      Alert.alert('Login failed', error.message)
+    if (profileError || !profile) {
+      Alert.alert('Login failed', 'Could not fetch user profile.')
+      return
     }
+
+    if (profile.role !== 2) {
+      // Not a participant
+      await supabase.auth.signOut() // optional, log them out immediately
+      Alert.alert('Access denied', 'Only participants are allowed to log in on this app.')
+      //console.log("Only participants allowed!")
+      return
+    }
+
+    Alert.alert('Welcome!', 'You have successfully logged in.')
   }
 
   const inputTextColor = isDark ? '#F9FAFB' : '#111827'
@@ -39,7 +64,7 @@ export default function LoginScreen() {
     <>
       <Stack.Screen options={{ title: 'Login' }} />
       <ThemedView style={styles.container}>
-        <ThemedText type="title">Login</ThemedText>
+        <ThemedText type="title">Welcome to TrekTrak!</ThemedText>
 
         <TextInput
           style={[
@@ -95,6 +120,12 @@ export default function LoginScreen() {
             {loading ? 'Logging in...' : 'Login'}
           </Text>
         </Pressable>
+
+        <Link href="/signup" style={{ marginTop: 16 }}>
+          <Text style={{ color: '#2563EB' }}>
+            Don’t have an account? Sign up here!
+          </Text>
+        </Link>
       </ThemedView>
     </>
   )
