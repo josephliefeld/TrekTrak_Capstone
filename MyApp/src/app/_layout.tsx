@@ -1,47 +1,51 @@
-import { Stack } from 'expo-router';
-import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { View, ActivityIndicator, Text } from 'react-native';
-import { useState, useEffect } from 'react';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { useFonts } from 'expo-font'
+import { Stack } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
+import 'react-native-reanimated'
+
+import { SplashScreenController } from '@/src/components/splash-screen-controller'
+
+import { useAuthContext } from '@/hooks/use-auth-context'
+import { useColorScheme } from '@/hooks/use-color-scheme'
+import AuthProvider from '@/providers/auth-provider'
+
+// Separate RootNavigator so we can access the AuthContext
+function RootNavigator() {
+  const { isLoggedIn } = useAuthContext()
+
+  return (
+    <Stack>
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!isLoggedIn}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  )
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const colorScheme = useColorScheme()
 
-  // 🔹 For testing: always force login first
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loaded] = useFonts({
+    SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf'),
+  })
 
-  useEffect(() => {
-    // Simulate auth check delay (optional)
-    const timer = setTimeout(() => {
-      setIsCheckingAuth(false);
-    }, 500); // small delay to simulate checking
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isCheckingAuth) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 12 }}>Checking authentication...</Text>
-      </View>
-    );
+  if (!loaded) {
+    // Async font loading only occurs in development.
+    return null
   }
-
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        {isLoggedIn ? (
-          // Logged in → tabs
-          <Stack.Screen name="(tabs)" />
-        ) : (
-          // Not logged in → auth screens
-          <Stack.Screen name="(auth)" />
-        )}
-      </Stack>
-      <StatusBar style="auto" />
+      <AuthProvider>
+        <SplashScreenController />
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </AuthProvider>
     </ThemeProvider>
-  );
+  )
 }
