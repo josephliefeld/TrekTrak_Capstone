@@ -155,17 +155,6 @@ export default function LoginForm() {
           >
             {loading ? 'Logging in…' : 'Log In'}
           </button>
-
-          {/* Footer */}
-          <p className="text-center text-sm text-gray-500">
-            New to Trek Trak?{' '}
-            <Link
-              to="/signup"
-              className="text-blue-600 font-medium hover:underline"
-            >
-              Create an account
-            </Link>
-          </p>
         </form>
       </main>
     </div>
