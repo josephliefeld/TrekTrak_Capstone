@@ -3,7 +3,27 @@ import { StyleSheet, TextInput, FlatList, TouchableOpacity, Animated } from 'rea
 import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+import { supabase } from '@/src/components/lib/supabase'
+import { useAuthContext } from '@/hooks/use-auth-context'
+
+
+type Event = {
+  event_id: number;
+  organizer: string;
+  event_name: string;
+  event_type: string;
+  is_private: boolean;
+  start_date: string;
+  end_date: string;
+  event_description: string;
+  is_publshed: boolean;
+};
+
+
+
+
 
 const sampleEvents = [
   { id: '1', name: 'Morning Run' },
@@ -14,9 +34,62 @@ const sampleEvents = [
 
 export default function EventsScreen() {
   const [search, setSearch] = useState('');
-  const [enrolledEvents, setEnrolledEvents] = useState<string[]>([]);
+  const [enrolledEvents, setEnrolledEvents] = useState<Event[]>([]);
   const [bannerMessage, setBannerMessage] = useState('');
   const bannerOpacity = useRef(new Animated.Value(0)).current;
+
+  const profile = useAuthContext()
+  
+
+  //Fetch events from Supabase
+  const[events, setEvents] = useState<Event[]>([]);
+
+
+  async function fetchEvents() {
+      const { data, error } = await supabase.from<"events", Event>("events").select("*");
+      if (error) {
+        console.error("Error fetching events:", error);
+      } else {
+        setEvents(data ?? []);
+      }
+  };
+
+  useEffect(() => {
+    fetchEvents();
+    console.log("Fetched", events)
+  }, []);
+
+  // Add user to daily_steps table for event they enrolled in
+  // TODO: Replace profile_id with users logged in id once auth is completed
+  const enrollProfileInEvent = async (eventId: number) => {
+    const { data, error } = await supabase
+      .from("daily_steps")
+      .insert(
+        {
+          profile_id: profile.profile?.profile_id,
+          event_id: eventId,
+          dailysteps: 0,
+          stepdate: new Date().toISOString().split('T')[0]
+        }
+      )
+
+      if (error) {
+        console.error("Error enrolling: ", error)
+      }
+  }
+
+  const unenrollProfileFromEvent = async (eventId: number) => {
+    const {error} = await supabase
+      .from("daily_steps")
+      .delete()
+      .eq("profile_id", profile.profile?.profile_id)
+      .eq("event_id", eventId)  
+
+      if (error) {
+        console.error("Error unenrolling: ", error)
+      }
+  }
+
 
   // Banner display logic
   const showBanner = (message: string) => {
@@ -39,35 +112,40 @@ export default function EventsScreen() {
   // -------------------------
   // UPDATED: Only 1 event active at a time
   // -------------------------
-  const handleEnroll = (id: string) => {
+  const handleEnroll = (event: Event) => {
     if (enrolledEvents.length >= 1) {
       showBanner("⚠️ You may only enroll in one event at a time");
       return;
     }
+    setEnrolledEvents([event]); // enroll in ONLY this event
 
-    setEnrolledEvents([id]); // enroll in ONLY this event
+    enrollProfileInEvent(event.event_id); //Add user to event
+
     showBanner('✅ You have enrolled in the event!');
   };
 
-  const handleUnenroll = (id: string) => {
+  const handleUnenroll = (event: Event) => {
     setEnrolledEvents([]);
+
+    unenrollProfileFromEvent(event.event_id); //Remove user from event
+
     showBanner('❌ You have unenrolled from the event.');
   };
 
-  const filteredEvents = sampleEvents.filter(event =>
-    event.name.toLowerCase().includes(search.toLowerCase())
+  const filteredEvents = events.filter(event =>
+    event.event_name.toLowerCase().includes(search.toLowerCase())
   );
 
   const availableEvents = filteredEvents.filter(
-    event => !enrolledEvents.includes(event.id)
+    event => !enrolledEvents.includes(event)
   );
 
-  const renderEventItem = (event: { id: string; name: string }, enrolled = false) => (
+  const renderEventItem = (event: Event, enrolled = false) => (
     <ThemedView style={styles.eventItem}>
-      <ThemedText>{event.name}</ThemedText>
+      <ThemedText>{event.event_name}</ThemedText>
       <TouchableOpacity
         onPress={() =>
-          enrolled ? handleUnenroll(event.id) : handleEnroll(event.id)
+          enrolled ? handleUnenroll(event) : handleEnroll(event)
         }
         style={[styles.button, enrolled ? styles.unenrollButton : styles.enrollButton]}
       >
@@ -123,8 +201,8 @@ export default function EventsScreen() {
         <ThemedView style={styles.sectionContainer}>
           <ThemedText type="subtitle">Your Enrolled Event</ThemedText>
           <FlatList
-            data={sampleEvents.filter(event => enrolledEvents.includes(event.id))}
-            keyExtractor={item => item.id}
+            data={events.filter(event => enrolledEvents.includes(event))} 
+            keyExtractor={item => item.event_id.toString()}
             renderItem={({ item }) => renderEventItem(item, true)}
           />
         </ThemedView>
@@ -136,7 +214,7 @@ export default function EventsScreen() {
         {availableEvents.length > 0 ? (
           <FlatList
             data={availableEvents}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.event_id.toString()}
             renderItem={({ item }) => renderEventItem(item)}
           />
         ) : (
@@ -144,6 +222,7 @@ export default function EventsScreen() {
         )}
       </ThemedView>
     </ParallaxScrollView>
+    
   );
 }
 
