@@ -5,7 +5,7 @@ import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
 import { useRouter } from 'expo-router';
-import { getProfile, Profile } from "../mock_user/profileService";
+// import { getProfile, Profile } from "../mock_user/profileService";
 
 export default function ProfileScreen() {
     const router = useRouter();
