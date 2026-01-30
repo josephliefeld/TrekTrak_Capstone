@@ -1,32 +1,18 @@
-import { useEffect, useState } from 'react';
+// import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
 import { useRouter } from 'expo-router';
-// import { getProfile, Profile } from "../mock_user/profileService";
 
-export default function ProfileScreen() {
+export default function EditProfileScreen() {
     const router = useRouter();
-    
-    const handleEditProfile = () => {
-      console.log("Navigate to Edit Profile page");
-      router.push('/profile/editProfile')
+        
+    const handleSaveChanges = () => {
+        console.log("Navigate back to Profile page");
+        router.push('../profile')
     };
-    
-    const [profile, setProfile] = useState<Profile | null>(null);
-
-    useEffect(() => {
-      async function loadProfile() {
-        const data = await getProfile("user-88888");
-        setProfile(data);
-      }
-
-      loadProfile();
-    }, [])
-
-    if(!profile) return <ThemedText>Loading...</ThemedText>;
 
     return (
         <ParallaxScrollView
@@ -40,26 +26,26 @@ export default function ProfileScreen() {
         >
             {/* Header Section */}
             <ThemedView style={styles.headerContainer}>
-                <ThemedText type="title">Profile</ThemedText>
+                <ThemedText type="title">Edit Profile</ThemedText>
             </ThemedView>
 
             <ThemedView style={styles.informationContainer}>
                 <ThemedView style={styles.infoCard}>
                     <ThemedText style={styles.infoLabel}>Username: </ThemedText>
-                    <ThemedText style={styles.infoValue}>{profile.username}</ThemedText>
+                    <ThemedText style={styles.infoValue}>testUser</ThemedText>
                 </ThemedView>
                 <ThemedView style={styles.infoCard}>
                     <ThemedText style={styles.infoLabel}>Email: </ThemedText>
-                    <ThemedText style={styles.infoValue}>{profile.email}</ThemedText>
+                    <ThemedText style={styles.infoValue}>testUser@oregonstate.edu</ThemedText>
                 </ThemedView>
                 <ThemedView style={styles.infoCard}>
                     <ThemedText style={styles.infoLabel}>Password: </ThemedText>
-                    <ThemedText style={styles.infoValue}>{profile.password}</ThemedText>
+                    <ThemedText style={styles.infoValue}>testPass123$</ThemedText>
                 </ThemedView>
             </ThemedView>
             <ThemedView>
-                <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-                    <ThemedText style={styles.editButtonText}>Edit Profile</ThemedText>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+                    <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
                 </TouchableOpacity>
             </ThemedView>
             
@@ -96,33 +82,35 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#e5e2dd',
     alignItems: 'flex-start',
-    flexDirection: 'row', 
+    flexDirection: 'row' 
   },
   infoLabel: {
-    // backgroundColor: '#2A2A2A',
+    backgroundColor: '#e5e2dd',
+    color: '#252525',
     // padding: 16,
     // borderRadius: 12,
     // alignItems: 'center',
     padding: 0,
-    color: '#252525'
   },
   infoValue: {
     backgroundColor: '#e5e2dd',
     color: '#252525',
     // marginBottom: 6,
     padding: 0,
-    borderRadius: 10
+    borderRadius: 12
   },
-  editButton: {
+  saveButton: {
     backgroundColor: '#5f5953',
     color: '#5f5953',
     // marginBottom: 6,
     padding: 8,
     borderRadius: 8,
-    width: 93,
+    width: 115,
+
   },
-  editButtonText: {
-    color: '#e5e2dd',
+  saveButtonText: {
+    backgroundColor: '#5f5953',
+    color: '#e4dddd',
   },
   value: {
     color: '#FFFFFF',
