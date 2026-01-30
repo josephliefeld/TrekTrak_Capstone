@@ -120,7 +120,7 @@ export default function Profile() {
         <h1 className="text-3xl font-extrabold text-blue-600 tracking-tight">
           Account Information
         </h1>
-        <p className="text-gray-700">View and edit your organization account details.</p>
+        <p className="text-gray-700">View and edit your account details.</p>
 
         <div className="bg-gray-100 rounded-xl shadow-inner p-6 space-y-4 text-left">
           <div><strong>Username:</strong> {user.username}</div>
