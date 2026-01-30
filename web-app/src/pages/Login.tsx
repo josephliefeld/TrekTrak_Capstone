@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router'
+import { useNavigate } from 'react-router'
 import { supabase } from '@/components/lib/supabase/client'
 import { useAuth } from '../context/useAuth'
 
