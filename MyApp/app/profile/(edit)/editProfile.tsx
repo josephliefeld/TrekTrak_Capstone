@@ -1,9 +1,9 @@
 // import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import ParallaxScrollView from '@/src/components/parallax-scroll-view';
+import { ThemedText } from '@/src/components/themed-text';
+import { ThemedView } from '@/src/components/themed-view';
 import { useRouter } from 'expo-router';
 
 export default function EditProfileScreen() {
