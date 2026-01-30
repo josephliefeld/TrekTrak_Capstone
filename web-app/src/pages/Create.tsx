@@ -68,6 +68,8 @@ export default function Create() {
   // tiers
   const [numTiers, setNumTiers] = React.useState<string>("0");
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
+  const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
+  const [tierIconNames, setTierIconNames] = React.useState<string[]>([]);
 
   // allows going to another page
   const navigate = useNavigate();
@@ -75,11 +77,14 @@ export default function Create() {
   const handleTiersSelect = (value: string) => {
     setNumTiers(value);
     const n = parseInt(value, 10);
-    setTierLevels(prev => {
-      const newValues = prev.slice(0, n);
-      while(newValues.length < n) newValues.push(0);
-      return newValues;
-    });
+    // setTierLevels(prev => {
+    //   const newValues = prev.slice(0, n);
+    //   while(newValues.length < n) newValues.push(0);
+    //   return newValues;
+    // });
+    setNumTiers(value);
+    setTierLevels(Array(n).fill(0));
+    setTierIcons(Array(n).fill(null));
   };
 
   // Handle individual input change
@@ -91,7 +96,12 @@ export default function Create() {
     });
   };
 
-  const handleValidatedFileChange = (
+  // ===============
+  // FILE VALIDATION
+  // ===============
+
+  // BANNERS IMAGES
+  const handleValidatedBannerFileChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
@@ -124,6 +134,45 @@ export default function Create() {
     setBannerFile(file);
   };
 
+  // TIER ICONS
+  const handleValidatedTierFileChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only PNG or JPG images allowed.");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert("Max size is 2MB.");
+      return;
+    }
+
+    setTierIcons(prev => {
+      const copy = [...prev];
+      copy[index] = file;
+      return copy;
+    });
+
+    setTierIconNames (prev => {
+      const copy = [...prev];
+      copy[index] = file.name;
+      return copy;
+    });
+  };
+
+  
+
+  // =====================
+  // DATE HELPER FUNCTIONS
+  // =====================
+
   // helper function that formats a JS date object
   function formatDate(date: Date | undefined) {
     if (!date) {
@@ -144,6 +193,7 @@ export default function Create() {
     return !isNaN(date.getTime())
   }
 
+
   // this sends the form details/files to supabase to be stored under a new 
   // event/tier configuration
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,81 +201,143 @@ export default function Create() {
     setIsSubmitting(true);
 
     try {
+      // Upload the banner to supabase banner-images bucket if it exists
       let banner_url = null;
       if(bannerFile) {
         const filePath = `banner/${Date.now()}_${bannerFile.name}`;
 
-        const {data: storageData, error: storageError } = await supabase
-          .storage
-          .from("banner-images")
-          .upload(filePath, bannerFile);
+        // const {data: storageData, error: storageError } = await supabase
+        //   .storage
+        //   .from("banner-images")
+        //   .upload(filePath, bannerFile);
         
-        if(storageError) {
-          alert ("Banner upload failed: " + storageError.message);
-          setIsSubmitting(false);
-          return;
-        }
+        // if(storageError) {
+        //   alert ("Banner upload failed: " + storageError.message);
+        //   setIsSubmitting(false);
+        //   return;
+        await supabase.storage.from("banner-images").upload(filePath, bannerFile);
+        banner_url = supabase.storage.from("banner-images").getPublicUrl(filePath).data.publicUrl;
+       
+      }
 
         // set banner_url
-        const { data: urlData } = supabase
-          .storage 
-          .from("banner-images")
-          .getPublicUrl(filePath);
+        // const { data: urlData } = supabase
+        //   .storage 
+        //   .from("banner-images")
+        //   .getPublicUrl(filePath);
 
-        banner_url = urlData.publicUrl;
-      }
-      // convert dates to strings of format YYYY-MM-DD
-      const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
-      const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
-
-      // inserts event information the user inputs into supabase as a new event
-      const { data, error } = await supabase
-        .from("events")
-        .insert(
-          {
-            event_name: title,
-            event_description: description,
-            event_type: eventType,
-            start_date,
-            end_date,
-            is_private: isPrivate,
-            num_tiers: numTiers,
-            banner_url: banner_url
-          },
-        );
-        // .select() // optional: returns inserted rows
-  
+        // banner_url = urlData.publicUrl;
+    
+    
+    
+    
+        // Insert the event information into the supabase events table
+        const { data: eventData, error: eventError } = await supabase
+          .from("events")
+          .insert(
+            {
+              event_name: title,
+              event_description: description,
+              event_type: eventType,
+              start_date: startDate?.toISOString().split("T")[0],
+              end_date: endDate?.toISOString().split("T")[0],
+              is_private: isPrivate,
+              banner_url: banner_url,
+              is_published: false
+            },
+          )
+          .select("event_id")
+          .single();
+    
         // hands error/success
-        if(error) {
-          console.log("Supabase insert error: ", error);
-          alert("Failed to add event: " + (error.message ?? JSON.stringify(error)));
+        if(eventError) {
+          console.log("Supabase insert error: ", eventError);
+          alert("Failed to add event: " + (eventError.message ?? JSON.stringify(eventError)));
           return;
         }
-
         // success
-        console.log("Inserted event:", data);
+        console.log("Inserted event:", eventData);
         alert("Event added successfully!");
 
-        // clear the form
-        setTitle("");
-        setDescription("");
-        setEventType("");
-        setFileName("No file chosen");
-        setStartDate(undefined);
-        setEndDate(undefined);
-        setStartValue("");
-        setEndValue("");
-        setStartMonth(undefined);
-        setEndMonth(undefined);
-        setIsPrivate(false);
+        const eventId = eventData.event_id;
 
-        // navigate back to events/home page
+        // Upload tier icons to the supabase event-tier-icons bucker
+        const icon_urls: string[] = []
+
+        for(let i = 0; i < tierIcons.length; i++){
+          const file = tierIcons[i];
+          if(!file){
+            icon_urls.push("");
+            continue;
+          }
+
+          const path = `tiers/${eventId}_${i}_${file.name}`;
+          await supabase.storage.from("event-tier-icons").upload(path, file);
+          const url = supabase.storage.from("event-tier-icons").getPublicUrl(path).data.publicUrl;
+          icon_urls.push(url);
+        }
+
+        console.log("Tier Levels:", tierLevels);
+        console.log("Tier Files:", tierIcons);
+        console.log("Num Tiers:", numTiers);
+
+        // insert tier configuration details into the tiers table in supabase
+        if (tierLevels.length > 0) {
+          const { error: tierError } = await supabase
+            .from("tiers")
+            .insert({
+              event_id: eventId,
+              num_tiers: parseInt(numTiers, 10),
+              benchmarks: tierLevels,
+              icon_urls: icon_urls
+            });
+
+          if (tierError) throw tierError;
+        }
+
+        alert("Event created!");
         navigate("/events");
-
+    
+    
+     } catch (err: any) {
+      console.error(err);
+      alert(err.message);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
+      // convert dates to strings of format YYYY-MM-DD
+      // const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
+      // const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
+
+      // inserts event information the user inputs into supabase as a new event
+
+        
+  
+        
+
+        
+
+        // clear the form
+  //       setTitle("");
+  //       setDescription("");
+  //       setEventType("");
+  //       setFileName("No file chosen");
+  //       setStartDate(undefined);
+  //       setEndDate(undefined);
+  //       setStartValue("");
+  //       setEndValue("");
+  //       setStartMonth(undefined);
+  //       setEndMonth(undefined);
+  //       setIsPrivate(false);
+
+  //       // navigate back to events/home page
+  //       navigate("/events");
+
+  //   } finally {
+  //       setIsSubmitting(false);
+  //   }
+  // };
 
   return (
     <>
@@ -256,7 +368,7 @@ export default function Create() {
                     id="banner"
                     accept=".png, .jpeg, .jpg"
                     className="hidden"
-                    onChange={handleValidatedFileChange}
+                    onChange={handleValidatedBannerFileChange}
                   />
                   <label
                     htmlFor="banner"
@@ -490,7 +602,7 @@ export default function Create() {
                             id={`icon-${index}`}
                             accept=".png, .jpeg, .jpg"
                             className="hidden"
-                            onChange={handleValidatedFileChange}
+                            onChange={(e) => handleValidatedTierFileChange(index, e)}
                           />
                           <label
                             htmlFor={`icon-${index}`}
@@ -498,7 +610,9 @@ export default function Create() {
                           >
                             Upload Icon
                           </label>
-                          <span className="text-sm text-gray-600">{fileName}</span>
+                          <span className="text-sm text-gray-600">
+                            {tierIconNames[index] || "No file chosen"}
+                          </span>
                         </div>
                         {fileError && (
                            <p className="text-sm text-red-500 mt-1">{fileError}</p>
