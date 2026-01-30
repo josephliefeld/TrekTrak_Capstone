@@ -29,7 +29,7 @@ export default function HomeScreen() {
         <ThemedText type="subtitle">Username</ThemedText>
         <ThemedText>{profile?.username}</ThemedText>
         <ThemedText type="subtitle">Full name</ThemedText>
-        <ThemedText>{profile?.full_name}</ThemedText>
+        <ThemedText>{profile?.email}</ThemedText>
       </ThemedView>
       <SignOutButton />
     </ParallaxScrollView>
