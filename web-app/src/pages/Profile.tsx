@@ -27,7 +27,6 @@ export default function Profile() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
 
-
   useEffect(() => {
     const fetchUser = async () => {
       const { data: currentUser, error: userError } = await supabase.auth.getUser(); // get logged-in user
@@ -116,84 +115,89 @@ export default function Profile() {
   if (!user) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-3xl font-bold">Account Information</h1>
-      <p>View and edit your organization account details.</p>
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8 space-y-6">
+        <h1 className="text-3xl font-extrabold text-blue-600 tracking-tight">
+          Account Information
+        </h1>
+        <p className="text-gray-700">View and edit your organization account details.</p>
 
-      <div className="bg-gray-100 rounded-xl shadow-md p-6 max-w-xl w-full space-y-4 text-left">
-        <div><strong>Username:</strong> {user.username}</div>
-        <div><strong>Email:</strong> {user.email}</div>
-        <div><strong>Organization:</strong> {user.organization}</div>
+        <div className="bg-gray-100 rounded-xl shadow-inner p-6 space-y-4 text-left">
+          <div><strong>Username:</strong> {user.username}</div>
+          <div><strong>Email:</strong> {user.email}</div>
+          <div><strong>Organization:</strong> {user.organization}</div>
 
-        <Button onClick={() => setOpenEditor(true)}>Edit Account</Button>
+          <Button onClick={() => setOpenEditor(true)}>Edit Account</Button>
 
-        {openEditor && (
-          <div className="mt-4 space-y-2">
-            <Select
-              value={editField}
-              onValueChange={(value) => {
-                setEditField(value as "username" | "password");
-                setErrorMessage("");   // resets validation errors when switching fields
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select field to edit" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Account Fields</SelectLabel>
-                  <SelectItem value="username">Username</SelectItem>
-                  <SelectItem value="password">Password</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-
-            {editField === "username" && (
-              <input
-                type="text"
-                className="border border-gray-300 rounded-md p-2 w-full"
-                placeholder="Enter new username"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-            )}
-
-            {editField === "password" && (
-              <div className="relative w-full">
-              <input
-                type={showPassword ? "text" : "password"}
-                className="border border-gray-300 rounded-md p-2 w-full pr-10"
-                placeholder="Enter new password"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-          
-              <button
-                type="button"
-                className="absolute inset-y-0 right-2 flex items-center text-gray-500"
-                onClick={() => setShowPassword((prev) => !prev)}
+          {openEditor && (
+            <div className="mt-4 space-y-4">
+              <Select
+                value={editField}
+                onValueChange={(value) => {
+                  setEditField(value as "username" | "password");
+                  setErrorMessage("");   // resets validation errors when switching fields
+                }}
               >
-                {showPassword ? <EyeClosed size={20} /> : <Eye size={20} />}
-              </button>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select field to edit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Account Fields</SelectLabel>
+                    <SelectItem value="username">Username</SelectItem>
+                    <SelectItem value="password">Password</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+
+              {editField === "username" && (
+                <input
+                  type="text"
+                  className="border border-gray-300 rounded-xl p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
+                  placeholder="Enter new username"
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                />
+              )}
+
+              {editField === "password" && (
+                <div className="relative w-full">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="border border-gray-300 rounded-xl p-3 w-full pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
+                    placeholder="Enter new password"
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                  />
+              
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 transition"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeClosed size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="text-red-600 text-sm">{errorMessage}</div>
+              )}
+
+              <Button
+                onClick={() => {
+                  if (!editField || !editText) return;
+                  
+                  if (editField === "username") updateUsername(editText);
+                  if (editField === "password") updatePassword(editText);
+                }}
+              >
+                Save Changes
+              </Button>
             </div>
-            )}
-
-            {errorMessage && (
-                  <div className="text-red-600 text-sm">{errorMessage}</div>
-                )}
-
-            <Button
-              onClick={() => {
-                if (!editField || !editText) return;
-                
-                if (editField === "username") updateUsername(editText);
-                if (editField === "password") updatePassword(editText);
-              }}
-            >
-              Save Changes
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
