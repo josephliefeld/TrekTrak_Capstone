@@ -205,32 +205,10 @@ export default function Create() {
       let banner_url = null;
       if(bannerFile) {
         const filePath = `banner/${Date.now()}_${bannerFile.name}`;
-
-        // const {data: storageData, error: storageError } = await supabase
-        //   .storage
-        //   .from("banner-images")
-        //   .upload(filePath, bannerFile);
-        
-        // if(storageError) {
-        //   alert ("Banner upload failed: " + storageError.message);
-        //   setIsSubmitting(false);
-        //   return;
         await supabase.storage.from("banner-images").upload(filePath, bannerFile);
         banner_url = supabase.storage.from("banner-images").getPublicUrl(filePath).data.publicUrl;
        
-      }
-
-        // set banner_url
-        // const { data: urlData } = supabase
-        //   .storage 
-        //   .from("banner-images")
-        //   .getPublicUrl(filePath);
-
-        // banner_url = urlData.publicUrl;
-    
-    
-    
-    
+      }  
         // Insert the event information into the supabase events table
         const { data: eventData, error: eventError } = await supabase
           .from("events")
@@ -306,38 +284,6 @@ export default function Create() {
       setIsSubmitting(false);
     }
   };
-      // convert dates to strings of format YYYY-MM-DD
-      // const start_date = startDate ? startDate.toISOString().split("T")[0] : null;
-      // const end_date = endDate ? endDate.toISOString().split("T")[0] : null;
-
-      // inserts event information the user inputs into supabase as a new event
-
-        
-  
-        
-
-        
-
-        // clear the form
-  //       setTitle("");
-  //       setDescription("");
-  //       setEventType("");
-  //       setFileName("No file chosen");
-  //       setStartDate(undefined);
-  //       setEndDate(undefined);
-  //       setStartValue("");
-  //       setEndValue("");
-  //       setStartMonth(undefined);
-  //       setEndMonth(undefined);
-  //       setIsPrivate(false);
-
-  //       // navigate back to events/home page
-  //       navigate("/events");
-
-  //   } finally {
-  //       setIsSubmitting(false);
-  //   }
-  // };
 
   return (
     <>
