@@ -18,14 +18,18 @@ const ExpoWebSecureStoreAdapter = {
 const supabaseURL = process.env.EXPO_PUBLIC_SUPABASE_URL!
 const supabaseKEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 
-export const supabase = createClient(
-  supabaseURL, supabaseKEY
-  // {
-  //   auth: {
-  //     storage: ExpoWebSecureStoreAdapter,
-  //     autoRefreshToken: true,
-  //     persistSession: true,
-  //     detectSessionInUrl: false,
-  //   },
-  // },
-);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey,
+  {
+    auth: {
+      storage:
+        Platform.OS === 'web'
+          ? isBrowser
+            ? window.localStorage
+            : undefined
+          : AsyncStorage,
+      autoRefreshToken: isBrowser,
+      persistSession: isBrowser,
+      detectSessionInUrl: false,
+    },
+  }
+)
