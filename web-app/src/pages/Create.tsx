@@ -137,22 +137,34 @@ export default function Create() {
           supabase.storage.from("banner-images").getPublicUrl(path).data.publicUrl
       }
 
-      const { data } = await supabase
-        .from("events")
-        .insert({
-          event_name: title,
-          event_description: description,
-          event_type: eventType,
-          start_date: startDate?.toISOString().split("T")[0],
-          end_date: endDate?.toISOString().split("T")[0],
-          is_private: isPrivate,
-          banner_url,
-          is_published: false,
-        })
-        .select("event_id")
-        .single()
+      const { data: eventData, error: eventError } = await supabase
+          .from("events")
+          .insert(
+            {
+              event_name: title,
+              event_description: description,
+              event_type: eventType,
+              start_date: startDate?.toISOString().split("T")[0],
+              end_date: endDate?.toISOString().split("T")[0],
+              is_private: isPrivate,
+              banner_url: banner_url,
+              is_published: false
+            },
+          )
+          .select("event_id")
+          .single();
+    
+        // hands error/success
+        if(eventError) {
+          console.log("Supabase insert error: ", eventError);
+          alert("Failed to add event: " + (eventError.message ?? JSON.stringify(eventError)));
+          return;
+        }
+        // success
+        console.log("Inserted event:", eventData);
+        alert("Event added successfully!");
 
-      const eventId = data.event_id
+      const eventId = eventData.event_id;
       const icon_urls: string[] = []
 
       for (let i = 0; i < tierIcons.length; i++) {
