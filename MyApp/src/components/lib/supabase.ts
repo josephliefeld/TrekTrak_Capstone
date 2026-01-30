@@ -29,3 +29,19 @@ export const supabase = createClient(
   //   },
   // },
 );
+
+// export const supabase = createClient(supabaseUrl, supabaseAnonKey,
+//   {
+//     auth: {
+//       storage:
+//         Platform.OS === 'web'
+//           ? isBrowser
+//             ? window.localStorage
+//             : undefined
+//           : AsyncStorage,
+//       autoRefreshToken: isBrowser,
+//       persistSession: isBrowser,
+//       detectSessionInUrl: false,
+//     },
+//   }
+// )
