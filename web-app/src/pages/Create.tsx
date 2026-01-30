@@ -277,9 +277,14 @@ export default function Create() {
         navigate("/events");
     
     
-     } catch (err: any) {
+     } catch (err: unknown) {
       console.error(err);
-      alert(err.message);
+
+      if (err instanceof Error) {
+        alert(err.message);
+      } else {
+        alert("An unexpected error occurred");
+      }
     } finally {
       setIsSubmitting(false);
     }
