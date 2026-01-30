@@ -12,7 +12,7 @@ export default function ProfileScreen() {
     
     const handleEditProfile = () => {
       console.log("Navigate to Edit Profile page");
-      router.push('/profile/editProfile')
+      router.push('../profile/editProfile')
     };
     
     const [profile, setProfile] = useState<Profile | null>(null);

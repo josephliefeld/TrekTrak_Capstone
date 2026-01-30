@@ -11,7 +11,7 @@ export default function EditProfileScreen() {
         
     const handleSaveChanges = () => {
         console.log("Navigate back to Profile page");
-        router.push('/profile')
+        router.push('../profile')
     };
 
     return (
