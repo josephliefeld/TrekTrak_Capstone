@@ -16,9 +16,9 @@ type Profile = {
 export default function ProfileScreen() {
     const router = useRouter();
     
-    const handleEditProfile = () => {
-      console.log("Navigate to Edit Profile page");
-      router.push('../profile_edit/editProfile')
+    const handleSaveChanges = () => {
+      console.log("Navigate to Profile page");
+      router.push('/profile')
     };
     
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
         >
             {/* Header Section */}
             <ThemedView style={styles.headerContainer}>
-                <ThemedText type="title">Profile</ThemedText>
+                <ThemedText type="title">Edit Profile</ThemedText>
             </ThemedView>
 
             <ThemedView style={styles.informationContainer}>
@@ -90,8 +90,8 @@ export default function ProfileScreen() {
                 </ThemedView>
             </ThemedView>
             <ThemedView>
-                <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-                    <ThemedText style={styles.editButtonText}>Change Password</ThemedText>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+                    <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
                 </TouchableOpacity>
             </ThemedView>
             
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     padding: 0,
     borderRadius: 10
   },
-  editButton: {
+  saveButton: {
     backgroundColor: '#5f5953',
     color: '#5f5953',
     // marginBottom: 6,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
-  editButtonText: {
+  saveButtonText: {
     color: '#e5e2dd',
   },
   value: {
