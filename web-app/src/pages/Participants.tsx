@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 
 interface Profile { 
   profile_id: string; 
-  username?: string; 
+  username: string; 
 }
 
-interface DailyStepsRow { 
-  profile_id: string; 
-  profiles: Profile; }
+// interface DailyStepsRow { 
+//   profile_id: string; 
+//   profiles: Profile; 
+// }
 
 type Event = {
   event_id: number;
@@ -47,7 +48,7 @@ export default function Participants() {
     .from("daily_steps")
     .select("profile_id, profiles(*)")
     .eq("event_id", eventId) as {
-      data: { profile_id: string, profiles: Profile }[] | null;
+      data: { profile_id: string, username: string }[] | null;
       error: any;
     };
     
@@ -59,8 +60,9 @@ export default function Participants() {
     // Extract unique profiles 
     const uniqueProfiles: Profile[] = Array.from( 
       new Map(
-        data!.map((row) => [row.profile_id, row.profiles])
-      ).values() ); 
+        data!.map((row) => [ row.profile_id, { profile_id: row.profile_id, username: row.username } ])
+      ).values() 
+    ); 
       
     setParticipants(uniqueProfiles); 
   };
