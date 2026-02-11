@@ -48,25 +48,37 @@ export default function Participants() {
     
     const { data, error } = await supabase
     .from("daily_steps")
-    .select("profile_id, profiles(*)")
-    .eq("event_id", eventId) as {
-      data: { profile_id: string, username: string }[] | null;
-      error: any;
-    };
+    .select("profile_id")
+    .eq("event_id", eventId)
     
     if (error) { 
       console.error("Error fetching participants:", error); 
       return; 
     } 
     
-    // Extract unique profiles 
-    const uniqueProfiles: Profile[] = Array.from( 
-      new Map(
-        data!.map((row) => [ row.profile_id, { profile_id: row.profile_id, username: row.username } ])
-      ).values() 
-    ); 
+    // Extract unique profile IDs 
+    const profileIds = Array.from(new Set(data.map(row => row.profile_id)));
       
-    setParticipants(uniqueProfiles); 
+    await fetchProfiles(profileIds);
+  };
+
+  const fetchProfiles = async (profileIds: string[]) => { 
+    if (profileIds.length === 0) { 
+      setParticipants([]); 
+      return; 
+    } 
+    
+    const { data, error } = await supabase
+    .from("profiles")
+    .select("profile_id, username")
+    .in("profile_id", profileIds); 
+    
+    if (error) { 
+      console.error("Error fetching profiles:", error); 
+      return; 
+    } 
+    
+    setParticipants(data as Profile[]); 
   };
 
   useEffect(() => {
