@@ -7,10 +7,12 @@ interface Profile {
   username: string; 
 }
 
-// interface DailyStepsRow { 
-//   profile_id: string; 
-//   profiles: Profile; 
-// }
+interface DailyStepsRow { 
+  profile_id: string; 
+  profiles: {
+    username: string;
+  }; 
+}
 
 type Event = {
   event_id: number;
@@ -22,7 +24,7 @@ export default function Participants() {
   const [participants, setParticipants] = useState<Profile[]>([]); 
   const [loading, setLoading] = useState(true);
 
-  const { eventId } = useParams(); // NOT GETTING THE EVENT ID "undefined"
+  const { eventId } = useParams();
   console.log(eventId);
 
   const fetchEvents = async () => {
