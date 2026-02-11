@@ -7,12 +7,12 @@ interface Profile {
   username: string; 
 }
 
-interface DailyStepsRow { 
-  profile_id: string; 
-  profiles: {
-    username: string;
-  }; 
-}
+// interface DailyStepsRow { 
+//   profile_id: string; 
+//   profiles: {
+//     username: string;
+//   }; 
+// }
 
 type Event = {
   event_id: number;
