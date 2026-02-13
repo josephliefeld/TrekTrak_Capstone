@@ -14,7 +14,7 @@ type Event = {
 
 export default function Participants() {
   const [event, setEvent] = useState<Event | null>(null);
-  const [participants, setParticipants] = useState<Profile[]>([]); 
+  const [participants, setParticipants] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { eventId } = useParams();
@@ -22,41 +22,41 @@ export default function Participants() {
   const fetchEvents = async () => {
     if (!eventId) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("events")
       .select("*")
       .eq("event_id", eventId)
       .single();
 
-    if (!error) setEvent(data);
+    setEvent(data);
   };
 
   const fetchParticipants = async () => {
-    if (!eventId) return; 
-    
-    const { data, error } = await supabase
+    if (!eventId) return;
+
+    const { data } = await supabase
       .from("daily_steps")
       .select("profile_id")
       .eq("event_id", eventId);
 
-    if (error) return;
+    if (!data) return;
 
     const profileIds = Array.from(new Set(data.map(row => row.profile_id)));
     await fetchProfiles(profileIds);
   };
 
-  const fetchProfiles = async (profileIds: string[]) => { 
-    if (profileIds.length === 0) { 
-      setParticipants([]); 
-      return; 
-    } 
-    
-    const { data, error } = await supabase
+  const fetchProfiles = async (profileIds: string[]) => {
+    if (profileIds.length === 0) {
+      setParticipants([]);
+      return;
+    }
+
+    const { data } = await supabase
       .from("profiles")
       .select("profile_id, username")
-      .in("profile_id", profileIds); 
-    
-    if (!error) setParticipants(data as Profile[]);
+      .in("profile_id", profileIds);
+
+    setParticipants(data as Profile[]);
   };
 
   useEffect(() => {
@@ -68,78 +68,90 @@ export default function Participants() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12">
-      <div className="max-w-4xl mx-auto space-y-8">
+      
+      {/* Page Header */}
+      <header className="text-center mb-12">
+        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+          {event?.event_name}
+        </h1>
+      </header>
 
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight">
-            {event?.event_name}
-          </h1>
-          <p className="text-gray-500 text-lg">
-            View participants for this event
-          </p>
-        </div>
+      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-10 space-y-8">
 
         {/* Navigation */}
-        <nav className="flex justify-center gap-6 text-sm font-medium text-gray-600">
+        <nav className="flex flex-wrap gap-4 border-b pb-6">
           <Link
             to={`/events/${event?.event_id}`}
-            className="hover:text-blue-600 transition"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
           >
             Event
           </Link>
+
           <Link
             to="teams"
-            className="hover:text-blue-600 transition"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
           >
             Teams
           </Link>
+
           <Link
             to="statistics"
-            className="hover:text-blue-600 transition"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
           >
             Statistics
           </Link>
+
           <Link
             to={`/events/edit/${event?.event_id}`}
-            className="hover:text-blue-600 transition"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
           >
             Edit
           </Link>
         </nav>
 
-        {/* Card Container */}
-        <div className="bg-white rounded-2xl shadow-lg p-10 space-y-6">
-
-          <h2 className="text-2xl font-semibold">
+        {/* Participants Section */}
+        <div className="bg-gray-50 rounded-2xl p-6 space-y-6">
+          <h2 className="text-xl font-semibold text-gray-800 tracking-tight">
             Participants
           </h2>
 
           {loading && (
-            <div className="text-gray-500">Loading participants…</div>
+            <p className="text-gray-600">Loading participants…</p>
           )}
 
           {!loading && participants.length === 0 && (
-            <div className="text-gray-500">
+            <p className="text-gray-600">
               No participants found for this event.
-            </div>
+            </p>
           )}
 
           {!loading && participants.length > 0 && (
-            <ul className="space-y-4">
+            <div className="flex flex-wrap gap-3">
               {participants.map((p) => (
-                <li
+                <div
                   key={p.profile_id}
-                  className="flex items-center justify-between p-4 border rounded-xl hover:shadow-sm transition"
+                  className="
+                    px-5 py-2
+                    bg-white
+                    border
+                    rounded-full
+                    text-sm
+                    font-medium
+                    text-gray-800
+                    shadow-sm
+                    hover:shadow-md
+                    hover:scale-105
+                    transition-all
+                    duration-200
+                  "
                 >
-                  <span className="font-medium text-gray-800">
-                    {p.username}
-                  </span>
-                </li>
+                  {p.username}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </div>
+
       </div>
     </div>
   );
