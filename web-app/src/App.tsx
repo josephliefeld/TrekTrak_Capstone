@@ -19,7 +19,7 @@ function App() {
     <>
       <div>
         {isLoggedIn && <TopNav />}
-      </div>
+      </div>  
       <div className="container mx-auto mt-6 p-4">
         <Routes>
 

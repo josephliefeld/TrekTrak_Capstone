@@ -75,37 +75,90 @@ export default function EventView() {
     fetchEvents();
   }, [eventId]);
 
-  return (
-    <div className="p-6">
-      <h1 className='font-bold text-3xl'>{event?.event_name}</h1>
+ return (
+  <div className="min-h-screen bg-gray-50 px-4 py-12">
+    {/* Page Header */}
+    <header className="text-center mb-12">
+      <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+        {event?.event_name}
+      </h1>
+    </header>
+
+    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-10 space-y-8">
       
-      <div>
-        <nav className="p-4 bg-gray-100 flex gap-4">
-          <Link to={`/events/participants/${event?.event_id}`}>Participants</Link>
-          <Link to="teams">Teams</Link>
-          <Link to="statistics">Statistics</Link>
-          <Link to={`/events/edit/${event?.event_id}`}> Edit</Link>
-        </nav>
+      {/* Navigation */}
+      <nav className="flex flex-wrap gap-4 border-b pb-6">
+        <Link
+          to={`/events/participants/${event?.event_id}`}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
+        >
+          Participants
+        </Link>
+        <Link
+          to="teams"
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
+        >
+          Teams
+        </Link>
+        <Link
+          to="statistics"
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
+        >
+          Statistics
+        </Link>
+        <Link
+          to={`/events/edit/${event?.event_id}`}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          Edit
+        </Link>
+      </nav>
 
-    
-        <div className='bg-gray-100 p-4 rounded m-4'>
-          <h2 className='font-bold'>Event Description</h2>
-          <p>{event?.event_description}</p>
-
-        </div>
-
-        
-        <div className='bg-gray-100 p-4 rounded m-4'>
-          <p>{event?.is_private ? "Private Event" : "Public Event"}</p>
-          <p>{event?.is_published ? "Published": "Not Published"}</p>
-          <p>Event Type: {event?.event_type} </p>
-          <p>Start Date: {event?.start_date}</p>
-          <p>End Date: {event?.end_date}</p>
-        </div>
-
-
+      {/* Event Description Section */}
+      <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
+        <h2 className="text-xl font-semibold text-gray-800 tracking-tight">
+          Event Description
+        </h2>
+        <p className="text-gray-700 leading-relaxed">
+          {event?.event_description}
+        </p>
       </div>
-          
+
+      {/* Event Details Section */}
+      <div className="bg-gray-50 rounded-2xl p-6 space-y-3">
+        <h2 className="text-xl font-semibold text-gray-800 tracking-tight">
+          Event Details
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700">
+          <div>
+            <span className="font-medium">Privacy:</span>{" "}
+            {event?.is_private ? "Private Event" : "Public Event"}
+          </div>
+
+          <div>
+            <span className="font-medium">Status:</span>{" "}
+            {event?.is_published ? "Published" : "Not Published"}
+          </div>
+
+          <div>
+            <span className="font-medium">Event Type:</span>{" "}
+            {event?.event_type}
+          </div>
+
+          <div>
+            <span className="font-medium">Start Date:</span>{" "}
+            {event?.start_date}
+          </div>
+
+          <div>
+            <span className="font-medium">End Date:</span>{" "}
+            {event?.end_date}
+          </div>
+        </div>
+      </div>
+
     </div>
-  )
+  </div>
+);
 }
