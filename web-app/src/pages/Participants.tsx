@@ -7,58 +7,41 @@ interface Profile {
   username: string; 
 }
 
-// interface DailyStepsRow { 
-//   profile_id: string; 
-//   profiles: {
-//     username: string;
-//   }; 
-// }
-
 type Event = {
   event_id: number;
   event_name: string;
 };
 
 export default function Participants() {
-  const[event, setEvent] = useState<Event | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [participants, setParticipants] = useState<Profile[]>([]); 
   const [loading, setLoading] = useState(true);
 
   const { eventId } = useParams();
-  console.log(eventId);
 
   const fetchEvents = async () => {
     if (!eventId) return;
 
     const { data, error } = await supabase
-    .from("events")
-    .select("*")
-    .eq('event_id', eventId)
-    .single();
+      .from("events")
+      .select("*")
+      .eq("event_id", eventId)
+      .single();
 
-    if (error) {
-      console.error("Error fetching events:", error);
-    } else {
-      setEvent(data);
-    }
+    if (!error) setEvent(data);
   };
 
   const fetchParticipants = async () => {
     if (!eventId) return; 
     
     const { data, error } = await supabase
-    .from("daily_steps")
-    .select("profile_id")
-    .eq("event_id", eventId)
-    
-    if (error) { 
-      console.error("Error fetching participants:", error); 
-      return; 
-    } 
-    
-    // Extract unique profile IDs 
+      .from("daily_steps")
+      .select("profile_id")
+      .eq("event_id", eventId);
+
+    if (error) return;
+
     const profileIds = Array.from(new Set(data.map(row => row.profile_id)));
-      
     await fetchProfiles(profileIds);
   };
 
@@ -69,55 +52,95 @@ export default function Participants() {
     } 
     
     const { data, error } = await supabase
-    .from("profiles")
-    .select("profile_id, username")
-    .in("profile_id", profileIds); 
+      .from("profiles")
+      .select("profile_id, username")
+      .in("profile_id", profileIds); 
     
-    if (error) { 
-      console.error("Error fetching profiles:", error); 
-      return; 
-    } 
-    
-    setParticipants(data as Profile[]); 
+    if (!error) setParticipants(data as Profile[]);
   };
 
   useEffect(() => {
     setLoading(true);
     Promise.all([fetchEvents(), fetchParticipants()]).finally(() =>
-      setLoading(false) 
-      ); 
-    }, [eventId]);
-
-  // GO THRU DAILY_STEPS TO GET EVENT_ID AND PROFILE_ID
+      setLoading(false)
+    );
+  }, [eventId]);
 
   return (
-    <div className="p-6">
-      <h1 className='font-bold text-3xl'>{`${event?.event_name}`}</h1>
-      <h2 className="text-3xl font-bold">Participants</h2>
-      <p>View the participants for this event</p>
-      <nav className="p-4 bg-gray-100 flex gap-4">
-          <Link to={`/events/${event?.event_id}`}>Event</Link>
-          <Link to="teams"> Teams</Link>
-          <Link to="statistics"> Statistics</Link>
-          <Link to={`/events/edit/${event?.event_id}`}> Edit</Link>
-      </nav>
+    <div className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="max-w-4xl mx-auto space-y-8">
 
-      {loading && <p>Loading participants…</p>}
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">
+            {event?.event_name}
+          </h1>
+          <p className="text-gray-500 text-lg">
+            View participants for this event
+          </p>
+        </div>
 
-      {!loading && participants.length === 0 && (
-        <p>No participants found for this event.</p>
-      )}
+        {/* Navigation */}
+        <nav className="flex justify-center gap-6 text-sm font-medium text-gray-600">
+          <Link
+            to={`/events/${event?.event_id}`}
+            className="hover:text-blue-600 transition"
+          >
+            Event
+          </Link>
+          <Link
+            to="teams"
+            className="hover:text-blue-600 transition"
+          >
+            Teams
+          </Link>
+          <Link
+            to="statistics"
+            className="hover:text-blue-600 transition"
+          >
+            Statistics
+          </Link>
+          <Link
+            to={`/events/edit/${event?.event_id}`}
+            className="hover:text-blue-600 transition"
+          >
+            Edit
+          </Link>
+        </nav>
 
-      {!loading && participants.length > 0 && (
-        <ul className="space-y-3 mt-4">
-          {participants.map((p) => (
-            <li key={p.profile_id} className="p-3 border rounded flex items-center gap-3" >
-              <span>{p.username}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+        {/* Card Container */}
+        <div className="bg-white rounded-2xl shadow-lg p-10 space-y-6">
 
+          <h2 className="text-2xl font-semibold">
+            Participants
+          </h2>
+
+          {loading && (
+            <div className="text-gray-500">Loading participants…</div>
+          )}
+
+          {!loading && participants.length === 0 && (
+            <div className="text-gray-500">
+              No participants found for this event.
+            </div>
+          )}
+
+          {!loading && participants.length > 0 && (
+            <ul className="space-y-4">
+              {participants.map((p) => (
+                <li
+                  key={p.profile_id}
+                  className="flex items-center justify-between p-4 border rounded-xl hover:shadow-sm transition"
+                >
+                  <span className="font-medium text-gray-800">
+                    {p.username}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
