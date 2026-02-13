@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
@@ -16,13 +16,48 @@ type Profile = {
 export default function ProfileScreen() {
     const router = useRouter();
     
-    const handleSaveChanges = () => {
-      console.log("Navigate to Profile page");
-      router.push('/profile')
-    };
+    // const handleSaveChanges = () => {
+      
+    //   console.log("Navigate to Profile page");
+    //   router.push('/profile')
+    // };
     
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handlePasswordChange = async () => {
+      setError('')
+
+      if(password != confirmPassword)
+      {
+        setError('Passwords do not match');
+        return;
+      }
+
+      // other checks would go here
+
+      // setLoading(true);
+
+      const {error} = await supabase.auth.updateUser({
+        password: password
+      });
+
+      // setLoading(false);
+
+      if(error) {
+        setError(error.message);
+      } else {
+        alert('Password updated.');
+        setPassword('');
+        setConfirmPassword('');
+      }
+
+      console.log("Navigate to Profile page");
+      router.push('/profile')
+    };
 
     useEffect(() => {
       async function loadProfile() {
@@ -89,13 +124,28 @@ export default function ProfileScreen() {
                     <ThemedText style={styles.infoValue}>{profile.email}</ThemedText>
                 </ThemedView>
             </ThemedView>
+            <ThemedView style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordTextInput}
+                placeholder='New Password'
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TextInput
+                style={styles.passwordTextInput}
+                placeholder='Confirm Password'
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+            </ThemedView>
             <ThemedView>
-                <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+                <TouchableOpacity style={styles.saveButton} onPress={handlePasswordChange}>
                     <ThemedText style={styles.saveButtonText}>Save Changes</ThemedText>
                 </TouchableOpacity>
             </ThemedView>
-            
-              
+                
         </ParallaxScrollView>
     )
 }
@@ -143,6 +193,19 @@ const styles = StyleSheet.create({
     color: '#252525',
     // marginBottom: 6,
     padding: 0,
+    borderRadius: 10
+  },
+  passwordContainer:{
+    backgroundColor: '#e5e2dd',
+    padding: 20,
+    borderRadius: 8,
+    gap: 20,
+  },
+  passwordTextInput:{
+    backgroundColor: '#e5e2dd',
+    color: '#252525',
+    // marginBottom: 6,
+    padding: 5,
     borderRadius: 10
   },
   saveButton: {
