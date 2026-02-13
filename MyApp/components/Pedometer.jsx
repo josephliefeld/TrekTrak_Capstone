@@ -2,12 +2,21 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pedometer } from 'expo-sensors';
 import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 🔹 Replace with your actual values
+// 🔹 Your Supabase credentials
 const supabaseUrl = 'https://rwrxwbobqirrdmpnirch.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3cnh3Ym9icWlycmRtcG5pcmNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NDYwMjksImV4cCI6MjA3NjMyMjAyOX0.dBPfgVJXmR0L15kGmgbOEYS5jvrMmiJ8MRhLMaAWHrg';
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✅ Proper React Native Supabase setup
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
 
 export default function App() {
   const [isPedometerAvailable, setIsPedometerAvailable] = useState('checking');
@@ -16,19 +25,26 @@ export default function App() {
 
   const today = new Date().toISOString().split('T')[0];
 
+  // ✅ Database Update Function (with full error debugging)
   const updateStepsInDatabase = async (steps) => {
-    const { error } = await supabase
-      .from('daily_steps')
-      .upsert(
-        {
-          date: today,
-          dailysteps: steps
-        },
-        { onConflict: 'date' }
-      );
+    try {
+      const { data, error } = await supabase
+        .from('daily_steps')
+        .upsert(
+          {
+            date: today,
+            dailysteps: steps
+          },
+          { onConflict: 'date' }
+        );
 
-    if (error) {
-      console.log('Supabase error:', error);
+      if (error) {
+        console.log('Supabase error:', error);
+      } else {
+        console.log('Supabase success:', data);
+      }
+    } catch (err) {
+      console.log('FULL NETWORK ERROR:', err);
     }
   };
 
@@ -36,22 +52,23 @@ export default function App() {
     const isAvailable = await Pedometer.isAvailableAsync();
     setIsPedometerAvailable(String(isAvailable));
 
-    if (isAvailable) {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(end.getDate() - 1);
+    if (!isAvailable) return;
 
-      const pastStepCountResult = await Pedometer.getStepCountAsync(start, end);
-      if (pastStepCountResult) {
-        setPastStepCount(pastStepCountResult.steps);
-        await updateStepsInDatabase(pastStepCountResult.steps);
-      }
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 1);
 
-      return Pedometer.watchStepCount(async result => {
-        setCurrentStepCount(result.steps);
-        await updateStepsInDatabase(result.steps);
-      });
+    const pastStepCountResult = await Pedometer.getStepCountAsync(start, end);
+
+    if (pastStepCountResult) {
+      setPastStepCount(pastStepCountResult.steps);
+      await updateStepsInDatabase(pastStepCountResult.steps);
     }
+
+    return Pedometer.watchStepCount(async result => {
+      setCurrentStepCount(result.steps);
+      await updateStepsInDatabase(result.steps);
+    });
   };
 
   useEffect(() => {
@@ -61,14 +78,18 @@ export default function App() {
       subscription = sub;
     });
 
-    return () => subscription && subscription.remove();
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>Pedometer.isAvailableAsync(): {isPedometerAvailable}</Text>
-      <Text>Steps taken in the last 24 hours: {pastStepCount}</Text>
-      <Text>Walk! And watch this go up: {currentStepCount}</Text>
+      <Text>Pedometer Available: {isPedometerAvailable}</Text>
+      <Text>Steps in last 24 hours: {pastStepCount}</Text>
+      <Text>Live Steps: {currentStepCount}</Text>
     </View>
   );
 }
