@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 
 import { supabase } from '@/src/components/lib/supabase'
 import { useAuthContext } from '@/hooks/use-auth-context'
+import CreateTeamModal from '@/src/components/ui/create-team-modal';
 
 
 type Event = {
@@ -18,8 +19,15 @@ type Event = {
   start_date: string;
   end_date: string;
   event_description: string;
-  is_publshed: boolean;
+  is_published: boolean;
 };
+
+type Team = {
+  id: number;
+  size: number;
+  name: string;
+  event_id: number;
+}
 
 
 
@@ -38,7 +46,14 @@ export default function EventsScreen() {
   const [bannerMessage, setBannerMessage] = useState('');
   const bannerOpacity = useRef(new Animated.Value(0)).current;
 
+  const [teams, setTeams] = useState<Team[]>([]);
+
   const profile = useAuthContext()
+
+  const [profileTeamId, setProfileTeamId] = useState<number | null>(profile.profile?.team_id);
+
+  const [modalVisible, setModalVisible] = useState(false);
+
   
 
   //Fetch events from Supabase
@@ -54,13 +69,37 @@ export default function EventsScreen() {
       }
   };
 
+  //Get event user is enrolled in already (might be none)
+  async function fetchEnrolledEvent(){
+    const { data, error } = await supabase
+      .from("daily_steps")
+      .select("event_id")
+      .eq("profile_id", profile.profile?.profile_id);
+    
+    if (error) {
+      console.error("Error fetching enrolled event: ", error);
+    }
+    else if (data.length > 0){
+      const enrolledEvent = events.filter(event => event.event_id == data[0].event_id);
+      setEnrolledEvents(enrolledEvent);
+
+      if (enrolledEvent.length > 0){
+        getTeams(enrolledEvent[0]); //Get teams for enrolled event
+      }
+    }
+  }
+
   useEffect(() => {
     fetchEvents();
     console.log("Fetched", events)
   }, []);
 
+  // Refetch enrolled event whenever events list changes to ensure we have the latest data
+  useEffect(() => {
+    fetchEnrolledEvent();
+  }, [events])
+
   // Add user to daily_steps table for event they enrolled in
-  // TODO: Replace profile_id with users logged in id once auth is completed
   const enrollProfileInEvent = async (eventId: number) => {
     const { data, error } = await supabase
       .from("daily_steps")
@@ -90,6 +129,36 @@ export default function EventsScreen() {
       }
   }
 
+  const addProfileToTeam = async (team: Team) => {
+    if (profileTeamId != null) {
+      showBanner("⚠️ You may only be in one team at a time.")
+      return;
+    }
+    const { data, error } = await supabase
+      .from("profiles")
+      .update( {team_id: team.id })
+      .eq("profile_id", profile.profile?.profile_id)
+    if (error) {
+      console.error("Error joining team: ", error)
+    }
+    else {
+      setProfileTeamId(team.id);
+    }
+  }
+
+  const removeProfileFromTeam = async (team: Team) => {
+    const {data, error} = await supabase
+      .from("profiles")
+      .update( {team_id: null })
+      .eq("profile_id", profile.profile?.profile_id)
+    if (error) {
+      console.error("Error leaving team: ", error)
+    }
+    else {
+      setProfileTeamId(null);
+    }
+  }
+
 
   // Banner display logic
   const showBanner = (message: string) => {
@@ -109,6 +178,23 @@ export default function EventsScreen() {
     }, 3000); // disappears after 3 seconds
   };
 
+
+  const getTeams = async (event: Event) => {
+    const { data, error } = await supabase
+      .from("teams")
+      .select('*')
+      .eq('event_id', event.event_id);
+
+    console.log("Data ", data);
+    
+    if (error) {
+      console.error("Error fetching teams: ", error)
+    }
+    else {
+      setTeams(data ?? [])
+    }
+  }
+
   // -------------------------
   // UPDATED: Only 1 event active at a time
   // -------------------------
@@ -120,6 +206,9 @@ export default function EventsScreen() {
     setEnrolledEvents([event]); // enroll in ONLY this event
 
     enrollProfileInEvent(event.event_id); //Add user to event
+
+    getTeams(event); //Fetch teams for the event
+
 
     showBanner('✅ You have enrolled in the event!');
   };
@@ -155,6 +244,30 @@ export default function EventsScreen() {
       </TouchableOpacity>
     </ThemedView>
   );
+
+  const renderTeamItem = (team: Team) => {
+    const inTeam = profileTeamId == team.id;
+
+    return (
+      <ThemedView style={styles.teamItem}>
+        
+        <ThemedText>{team.name}</ThemedText>
+        <ThemedText>Team size: {team.size}</ThemedText>
+
+        <TouchableOpacity 
+          onPress={ () => 
+            inTeam ? removeProfileFromTeam(team) : addProfileToTeam(team)
+          }
+          style={styles.joinTeamButton}
+        >
+          <ThemedText type='defaultSemiBold'>{inTeam ? "Leave Team" : "Join Team"}</ThemedText>
+        </TouchableOpacity>
+
+      </ThemedView>
+    )
+  };
+
+
 
   return (
     <ParallaxScrollView
@@ -205,6 +318,24 @@ export default function EventsScreen() {
             keyExtractor={item => item.event_id.toString()}
             renderItem={({ item }) => renderEventItem(item, true)}
           />
+          <ThemedText style={styles.teamHeader}>Create and join teams</ThemedText>
+
+          <TouchableOpacity 
+            style={styles.createTeamButton}
+            onPress={ () => setModalVisible( (value) => !value) }
+            >
+            <ThemedText type='defaultSemiBold'>Create Team</ThemedText>
+          </TouchableOpacity>
+
+          <FlatList
+            data={teams}
+            keyExtractor={item => item.id.toString()}
+            renderItem={({ item }) => renderTeamItem(item)}
+          />
+
+          <CreateTeamModal modalVisible={modalVisible} setModalVisible={setModalVisible} event={enrolledEvents[0]} getTeams={getTeams} />
+
+
         </ThemedView>
       )}
 
@@ -226,7 +357,7 @@ export default function EventsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   reactLogo: {
     height: 178,
     width: 290,
@@ -286,5 +417,34 @@ const styles = StyleSheet.create({
   bannerText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  teamItem: {
+    backgroundColor: '#c7f1ff',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    flexDirection: 'row',
+    gap: 16
+  },
+  teamHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  joinTeamButton: {
+    backgroundColor: '#a7cbed',
+    borderRadius: 6,
+    width: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    fontWeight: 'bold',
+  },
+  createTeamButton: {
+    backgroundColor: '#99eeff',
+    borderRadius: 6,
+    width: 120,
+    marginVertical: 8,
+    alignItems: 'center',
+
   },
 });
