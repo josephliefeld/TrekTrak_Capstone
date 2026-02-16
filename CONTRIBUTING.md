@@ -12,15 +12,15 @@ List prerequisites, setup steps, environment variables/secrets handling, and how
 
 git clone git@github.com:josephliefeld/TrekTrak_Capstone.git  
 
-To run the web app:
+To run the web app:  
 cd web-app  
 npm install  
 npm run dev  
-
-To run the mobile app:
-cd MyApp
-npm install
-npx expo start
+  
+To run the mobile app:  
+cd MyApp  
+npm install  
+npx expo start  
  
 ## Branching & Workflow
 
@@ -35,9 +35,9 @@ name_mobileapp
 We will be merging branches to main after completing any features/changes.
 ## Issues & Planning
 
-Explain how to file issues, required templates/labels, estimation, and triage/assignment practices.
-**Filing Issues and Bugs**
-New issues should be filed using Github issues. Title should provide a general description of the issue with details added in description.
+Explain how to file issues, required templates/labels, estimation, and triage/assignment practices.  
+**Filing Issues and Bugs**  
+New issues should be filed using Github issues. Title should provide a general description of the issue with details added in description.  
 
 ## Commit Messages
 
@@ -96,5 +96,5 @@ TBD
 ## Support & Contact
 
 Provide maintainer contact channel, expected response windows, and where to ask questions.
-
+  
 Contact our team at: 
