@@ -1,6 +1,14 @@
-alter table "public"."daily_steps" disable row level security;
+drop view if exists "public"."event_step_totals";
 
-alter table "public"."profiles" disable row level security;
+alter table "public"."daily_steps" enable row level security;
+
+alter table "public"."profiles" enable row level security;
+
+alter table "public"."tiers" drop column "icon_urls";
+
+CREATE UNIQUE INDEX profiles_username_key ON public.profiles USING btree (username);
+
+alter table "public"."profiles" add constraint "profiles_username_key" UNIQUE using index "profiles_username_key";
 
 set check_function_bodies = off;
 
@@ -25,6 +33,13 @@ BEGIN
 END;
 $function$
 ;
+
+create or replace view "public"."event_step_totals" as  SELECT profiles.profile_id,
+    daily_steps.event_id,
+    (daily_steps.dailysteps + profiles.total_steps) AS summed_steps
+   FROM public.daily_steps,
+    public.profiles;
+
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
@@ -55,22 +70,22 @@ $function$
 CREATE OR REPLACE FUNCTION public.validate_daily_steps()
  RETURNS trigger
  LANGUAGE plpgsql
-AS $function$BEGIN
-    IF NEW.dailysteps < 0 OR NEW.dailysteps > 100000 THEN
-        RAISE EXCEPTION 'Invalid step count: %', NEW.dailysteps;
+AS $function$
+BEGIN
+    IF NEW.steps < 0 OR NEW.steps > 100000 THEN
+        RAISE EXCEPTION 'Invalid step count: %', NEW.steps;
     END IF;
     RETURN NEW;
-END;$function$
+END;
+$function$
 ;
 
-CREATE TRIGGER objects_delete_delete_prefix AFTER DELETE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
-
-CREATE TRIGGER objects_insert_create_prefix BEFORE INSERT ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.objects_insert_prefix_trigger();
-
-CREATE TRIGGER objects_update_create_prefix BEFORE UPDATE ON storage.objects FOR EACH ROW WHEN (((new.name <> old.name) OR (new.bucket_id <> old.bucket_id))) EXECUTE FUNCTION storage.objects_update_prefix_trigger();
-
-CREATE TRIGGER prefixes_create_hierarchy BEFORE INSERT ON storage.prefixes FOR EACH ROW WHEN ((pg_trigger_depth() < 1)) EXECUTE FUNCTION storage.prefixes_insert_trigger();
-
-CREATE TRIGGER prefixes_delete_hierarchy AFTER DELETE ON storage.prefixes FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
+drop policy "Allow tier icon upload 2ocsqq_0" on "storage"."objects";
 
 
+  create policy "Allow event tier icon upload 2ocsqq_0"
+  on "storage"."objects"
+  as permissive
+  for insert
+  to public
+with check ((bucket_id = 'event-tier-icons'::text));
