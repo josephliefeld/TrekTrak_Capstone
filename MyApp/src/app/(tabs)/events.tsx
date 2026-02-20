@@ -108,7 +108,8 @@ export default function EventsScreen() {
           profile_id: profile.profile?.profile_id,
           event_id: eventId,
           dailysteps: 0,
-          stepdate: new Date().toISOString().split('T')[0]
+          totaldailysteps: 0,
+          date: new Date().toISOString().split('T')[0]
         }
       )
 
@@ -214,6 +215,10 @@ export default function EventsScreen() {
   };
 
   const handleUnenroll = (event: Event) => {
+    if (profileTeamId != null) {
+      showBanner("⚠️ You must leave your team before unenrolling from the event.");
+      return;
+    }
     setEnrolledEvents([]);
 
     unenrollProfileFromEvent(event.event_id); //Remove user from event
@@ -258,7 +263,7 @@ export default function EventsScreen() {
           onPress={ () => 
             inTeam ? removeProfileFromTeam(team) : addProfileToTeam(team)
           }
-          style={styles.joinTeamButton}
+          style={ [styles.teamButton, inTeam ? styles.leaveTeamButton : styles.joinTeamButton] }
         >
           <ThemedText type='defaultSemiBold'>{inTeam ? "Leave Team" : "Join Team"}</ThemedText>
         </TouchableOpacity>
@@ -332,6 +337,9 @@ export default function EventsScreen() {
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => renderTeamItem(item)}
           />
+          {teams.length == 0 &&
+            <ThemedText>No teams created for this event yet</ThemedText>
+          }
 
           <CreateTeamModal modalVisible={modalVisible} setModalVisible={setModalVisible} event={enrolledEvents[0]} getTeams={getTeams} />
 
@@ -431,13 +439,18 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  joinTeamButton: {
-    backgroundColor: '#a7cbed',
+  teamButton: {
     borderRadius: 6,
     width: 100,
     justifyContent: 'center',
     alignItems: 'center',
     fontWeight: 'bold',
+  },
+  joinTeamButton: {
+    backgroundColor: '#a7cbed',
+  },
+  leaveTeamButton: {
+    backgroundColor: '#ff655a',
   },
   createTeamButton: {
     backgroundColor: '#99eeff',

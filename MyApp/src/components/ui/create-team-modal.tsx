@@ -109,7 +109,7 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
                         style={modalstyles.defaultButton}
                         >
                             <ThemedText>
-                            Close Modal
+                                Cancel
                             </ThemedText> 
                         </TouchableOpacity>
 
@@ -152,7 +152,8 @@ const modalstyles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         fontWeight: 'bold',
-        padding: 5
+        padding: 5,
+        width: 120,
 
     }
 
