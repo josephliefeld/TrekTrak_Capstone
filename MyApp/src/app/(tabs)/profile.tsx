@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Image } from 'expo-image';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
@@ -14,158 +14,164 @@ type Profile = {
 };
 
 export default function ProfileScreen() {
-    const router = useRouter();
-    
-    const handleEditProfile = () => {
-      console.log("Navigate to Edit Profile page");
-      router.push('../profile_edit/editProfile')
-    };
-    
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-      async function loadProfile() {
-        try {
-          // get the current user
-          const {
-            data: {user},
-            error: authError,
-          } = await supabase.auth.getUser();
+  const handleEditProfile = () => {
+    router.push('../profile_edit/editProfile');
+  };
 
-          if (authError || !user) {
-            throw new Error('No authenticated user');
-          }
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
 
-          // get the user's profile information
-          const {data, error} = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('profile_id', user.id)
-            .single()
-          
-          if(error)
-          {
-            throw error;
-          }
+        if (authError || !user) throw new Error('No authenticated user');
 
-          setProfile(data);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('profile_id', user.id)
+          .single();
 
-        } catch (error) {
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
+        if (error) throw error;
+
+        setProfile(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
+    }
 
-      loadProfile();
-    }, [])
+    loadProfile();
+  }, []);
 
-    if(loading) return <ThemedText>Loading...</ThemedText>;
-    if(!profile) return <ThemedText>Profile not found.</ThemedText>;
-
+  if (loading) {
     return (
-        <ParallaxScrollView
-            headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-            headerImage={
-                <Image
-                  source={require('@/assets/images/partial-react-logo.png')}
-                  style={styles.reactLogo}
-                />
-            }
-        >
-            {/* Header Section */}
-            <ThemedView style={styles.headerContainer}>
-                <ThemedText type="title">Profile</ThemedText>
-            </ThemedView>
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1D3D47" />
+      </ThemedView>
+    );
+  }
 
-            <ThemedView style={styles.informationContainer}>
-                <ThemedView style={styles.infoCard}>
-                    <ThemedText style={styles.infoLabel}>Username: </ThemedText>
-                    <ThemedText style={styles.infoValue}>{profile.username}</ThemedText>
-                </ThemedView>
-                <ThemedView style={styles.infoCard}>
-                    <ThemedText style={styles.infoLabel}>Email: </ThemedText>
-                    <ThemedText style={styles.infoValue}>{profile.email}</ThemedText>
-                </ThemedView>
-            </ThemedView>
-            <ThemedView>
-                <TouchableOpacity style={styles.editButton} onPress={handleEditProfile}>
-                    <ThemedText style={styles.editButtonText}>Change Password</ThemedText>
-                </TouchableOpacity>
-            </ThemedView>
-            
-              
-        </ParallaxScrollView>
-    )
+  if (!profile) {
+    return <ThemedText>Profile not found.</ThemedText>;
+  }
+
+  return (
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+      headerImage={
+        <Image
+          source={require('@/assets/images/partial-react-logo.png')}
+          style={styles.reactLogo}
+        />
+      }
+    >
+      {/* Header */}
+      <ThemedView style={styles.header}>
+        <ThemedText type="title">👤 Profile</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          Manage your account details
+        </ThemedText>
+      </ThemedView>
+
+      {/* Profile Info Card */}
+      <ThemedView style={styles.card}>
+        <ThemedView style={styles.infoRow}>
+          <ThemedText style={styles.label}>Username</ThemedText>
+          <ThemedText style={styles.value}>{profile.username}</ThemedText>
+        </ThemedView>
+
+        <ThemedView style={styles.divider} />
+
+        <ThemedView style={styles.infoRow}>
+          <ThemedText style={styles.label}>Email</ThemedText>
+          <ThemedText style={styles.value}>{profile.email}</ThemedText>
+        </ThemedView>
+      </ThemedView>
+
+      {/* Actions */}
+      <ThemedView style={styles.actions}>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleEditProfile}>
+          <ThemedText style={styles.primaryButtonText}>
+            Change Password
+          </ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+    </ParallaxScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    reactLogo: {
-    height: 160,
+  reactLogo: {
+    height: 170,
     width: 280,
+    position: 'absolute',
     bottom: 0,
     left: 0,
-    position: 'absolute',
     opacity: 0.2,
   },
-  headerContainer: {
+
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  header: {
     alignItems: 'center',
     marginBottom: 24,
   },
-  titleText: {
-    color: '#e5e2dd',
+  subtitle: {
+    marginTop: 6,
+    opacity: 0.7,
   },
-  subtitleText: {
-    color: '#CCCCCC',
+
+  card: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 16,
+    elevation: 2,
+    gap: 12,
   },
-  informationContainer: {
-    backgroundColor: '#e5e2dd',
-    padding: 20,
-    borderRadius: 8,
-    gap: 20,
+
+  infoRow: {
+    gap: 4,
   },
-  infoCard: {
-    backgroundColor: '#e5e2dd',
-    alignItems: 'flex-start',
-    flexDirection: 'row', 
-  },
-  infoLabel: {
-    // backgroundColor: '#2A2A2A',
-    // padding: 16,
-    // borderRadius: 12,
-    // alignItems: 'center',
-    padding: 0,
-    color: '#252525'
-  },
-  infoValue: {
-    backgroundColor: '#e5e2dd',
-    color: '#252525',
-    // marginBottom: 6,
-    padding: 0,
-    borderRadius: 10
-  },
-  editButton: {
-    backgroundColor: '#5f5953',
-    color: '#5f5953',
-    // marginBottom: 6,
-    padding: 8,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  editButtonText: {
-    color: '#e5e2dd',
+  label: {
+    fontSize: 12,
+    opacity: 0.6,
   },
   value: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  footer: {
+
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+  },
+
+  actions: {
     marginTop: 24,
+    paddingHorizontal: 16,
+  },
+
+  primaryButton: {
+    backgroundColor: '#1D3D47',
+    paddingVertical: 12,
+    borderRadius: 14,
     alignItems: 'center',
   },
-  footerText: {
-    color: '#777777',
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
-})
+});
