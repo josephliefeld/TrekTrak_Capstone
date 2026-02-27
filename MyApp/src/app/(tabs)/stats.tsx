@@ -108,18 +108,26 @@ export default function StatsScreen() {
     setErrorMessage(null);
 
     try {
-      // Total steps from profiles
-      const { data: profileRow, error: profileErr } = await supabase
-        .from('profiles')
-        .select('total_steps')
+      // All-time total steps: sum daily overall rows (event_id is null)
+      const { data: allTimeRows, error: allTimeErr } = await supabase
+        .from('daily_steps')
+        .select('dailysteps, totaldailysteps')
         .eq('profile_id', userId)
-        .single();
+        .is('event_id', null);
 
-      if (profileErr) throw profileErr;
+      if (allTimeErr) throw allTimeErr;
 
-      setTotalSteps(
-        typeof profileRow?.total_steps === 'number' ? profileRow.total_steps : null,
-      );
+      let allTimeTotal = 0;
+      for (const r of allTimeRows ?? []) {
+        const vRaw =
+          typeof r?.totaldailysteps === 'number'
+            ? r.totaldailysteps
+            : typeof r?.dailysteps === 'number'
+              ? r.dailysteps
+              : 0;
+        allTimeTotal += Number.isFinite(vRaw) ? vRaw : 0;
+      }
+      setTotalSteps(allTimeTotal);
 
       // Steps today from daily_steps
       // Your real schema columns: id, profile_id, event_id, dailysteps, date, totaldailysteps
