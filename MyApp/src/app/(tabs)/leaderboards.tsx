@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, ActivityIndicator } from 'react-native';
+import {
+  FlatList,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+} from 'react-native';
 import { Image } from 'expo-image';
 import ParallaxScrollView from '@/src/components/parallax-scroll-view';
 import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
 
-// Type for leaderboard entries (will match your Supabase schema later)
 interface LeaderboardEntry {
   id: string;
   username: string;
@@ -17,15 +21,10 @@ export default function LeaderboardsScreen() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Placeholder effect — replace with Supabase fetch when backend is ready
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
       try {
-        // TODO: Replace with Supabase call
-        // Example: const { data, error } = await supabase.from('leaderboard').select('*').order('score', { ascending: false });
-
-        // Mock data for now
         const mockData: LeaderboardEntry[] = [
           { id: '1', username: 'KekoaY', score: 9820, event_name: 'Step Challenge' },
           { id: '2', username: 'MariaL', score: 9475, event_name: 'Step Challenge' },
@@ -42,16 +41,29 @@ export default function LeaderboardsScreen() {
     fetchLeaderboard();
   }, []);
 
-  const renderItem = ({ item, index }: { item: LeaderboardEntry; index: number }) => (
-    <View style={styles.entryContainer}>
-      <ThemedText type="defaultSemiBold" style={styles.rankText}>
-        #{index + 1}
-      </ThemedText>
-      <ThemedView style={styles.entryContent}>
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: LeaderboardEntry;
+    index: number;
+  }) => (
+    <ThemedView style={styles.card}>
+      <View style={styles.rankBadge}>
+        <ThemedText style={styles.rankText}>#{index + 1}</ThemedText>
+      </View>
+
+      <ThemedView style={styles.cardContent}>
         <ThemedText type="subtitle">{item.username}</ThemedText>
-        <ThemedText type="default">Steps: {item.score}</ThemedText>
+        <ThemedText style={styles.metaText}>
+          {item.event_name}
+        </ThemedText>
       </ThemedView>
-    </View>
+
+      <ThemedText style={styles.scoreText}>
+        {item.score.toLocaleString()}
+      </ThemedText>
+    </ThemedView>
   );
 
   return (
@@ -65,13 +77,15 @@ export default function LeaderboardsScreen() {
       }
     >
       {/* Header */}
-      <ThemedView style={styles.headerContainer}>
+      <ThemedView style={styles.header}>
         <ThemedText type="title">🥇 Leaderboards</ThemedText>
-        <ThemedText type="subtitle">Top Performers Across TrekTrak Events</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          Top performers across TrekTrak events
+        </ThemedText>
       </ThemedView>
 
       {/* Content */}
-      <ThemedView style={styles.contentContainer}>
+      <ThemedView style={styles.content}>
         {loading ? (
           <ActivityIndicator size="large" color="#1D3D47" />
         ) : leaderboard.length > 0 ? (
@@ -79,10 +93,10 @@ export default function LeaderboardsScreen() {
             data={leaderboard}
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
-            contentContainerStyle={styles.listContainer}
+            contentContainerStyle={styles.list}
           />
         ) : (
-          <ThemedText type="defaultSemiBold" style={styles.placeholderText}>
+          <ThemedText style={styles.emptyText}>
             No leaderboard data yet. Check back soon!
           </ThemedText>
         )}
@@ -93,45 +107,70 @@ export default function LeaderboardsScreen() {
 
 const styles = StyleSheet.create({
   headerImage: {
-    height: 178,
-    width: 290,
+    height: 170,
+    width: 280,
+    position: 'absolute',
     bottom: 0,
     left: 0,
-    position: 'absolute',
   },
-  headerContainer: {
+
+  header: {
     alignItems: 'center',
     marginBottom: 20,
   },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: 12,
+  subtitle: {
+    marginTop: 6,
+    opacity: 0.7,
   },
-  listContainer: {
+
+  content: {
+    paddingHorizontal: 16,
+  },
+  list: {
     gap: 12,
   },
-  entryContainer: {
+
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 14,
+    elevation: 2,
+  },
+
+  rankBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E6F0F4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   rankText: {
-    fontSize: 18,
-    width: 40,
-    textAlign: 'center',
+    fontWeight: '700',
     color: '#1D3D47',
   },
-  entryContent: {
+
+  cardContent: {
     flex: 1,
+    gap: 4,
   },
-  placeholderText: {
+  metaText: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+
+  scoreText: {
+    fontWeight: '700',
+    fontSize: 16,
+    color: '#1D3D47',
+  },
+
+  emptyText: {
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 24,
+    opacity: 0.7,
   },
 });
