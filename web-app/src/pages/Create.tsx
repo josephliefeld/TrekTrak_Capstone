@@ -53,6 +53,10 @@ export default function Create() {
   const [isPrivate, setIsPrivate] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const [csvFile, setCsvFile] = React.useState<File | null>(null);
+  const [csvFileName, setCsvFileName] = React.useState("No file chosen");
+  const [csvError, setCsvError] = React.useState("");
+
   const [numTiers, setNumTiers] = React.useState<string>("0");
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
   const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
@@ -140,6 +144,29 @@ export default function Create() {
     });
   };
 
+  // ===== CSV file Validation =====
+  const handleValidatedCsvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+  
+    if (!file) {
+      setCsvFile(null);
+      setCsvFileName("No file chosen");
+      setCsvError("");
+      return;
+    }
+  
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setCsvError("Only CSV files are allowed.");
+      setCsvFile(null);
+      setCsvFileName("No file chosen");
+      return;
+    }
+  
+    setCsvError("");
+    setCsvFile(file);
+    setCsvFileName(file.name);
+  };
+
   // === Date Helpers ===
   const formatDate = (date: Date | undefined) =>
     date?.toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" }) ?? "";
@@ -206,6 +233,43 @@ export default function Create() {
           });
 
         if (tierError) throw tierError;
+      }
+
+      if (isPrivate && csvFile) {
+        // 1️⃣ Still upload file (optional but fine)
+        const csvPath = `event_${eventId}_${Date.now()}_${csvFile.name}`;
+      
+        const { error: csvUploadError } = await supabase
+          .storage
+          .from("private_event_lists")
+          .upload(csvPath, csvFile);
+      
+        if (csvUploadError) {
+          throw csvUploadError;
+        }
+      
+        // 2️⃣ Read CSV contents
+        const text = await csvFile.text();
+      
+        const emails = text
+          .split("\n")
+          .map(e => e.trim().toLowerCase())
+          .filter(e => e.length > 0);
+      
+        // 3️⃣ Convert to rows for DB
+        const rows = emails.map(email => ({
+          event_id: eventId,
+          email
+        }));
+      
+        // 4️⃣ Insert into approval table
+        const { error: insertError } = await supabase
+          .from("private_event_members")
+          .insert(rows);
+      
+        if (insertError) {
+          throw insertError;
+        }
       }
 
       alert("Event created!");
@@ -433,6 +497,38 @@ export default function Create() {
                   </p>
                 </div>
               </div>
+              {/* CSV Upload (only shown when private is enabled) */}
+              {isPrivate && (
+                <div className="mt-6 ml-7 space-y-2">
+                  <Label htmlFor="csvUpload" className="text-base font-medium text-gray-700">
+                    Upload CSV of Approved User Emails
+                  </Label>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      id="csvUpload"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={handleValidatedCsvChange}
+                    />
+                    <label
+                      htmlFor="csvUpload"
+                      className="px-4 py-3 border border-gray-300 rounded-xl text-sm cursor-pointer hover:bg-gray-50 transition"
+                    >
+                      Choose CSV
+                    </label>
+
+                    <span className="text-sm text-gray-600">
+                      {csvFileName}
+                    </span>
+                  </div>
+
+                  {csvError && (
+                    <p className="text-sm text-red-500">{csvError}</p>
+                  )}
+                </div>
+              )}
             </Field>
           </FieldGroup>
         </FieldSet>

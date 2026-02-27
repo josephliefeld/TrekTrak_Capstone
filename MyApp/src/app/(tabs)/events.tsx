@@ -199,11 +199,21 @@ export default function EventsScreen() {
   // -------------------------
   // UPDATED: Only 1 event active at a time
   // -------------------------
-  const handleEnroll = (event: Event) => {
+  const handleEnroll = async (event: Event) => {
     if (enrolledEvents.length >= 1) {
       showBanner("⚠️ You may only enroll in one event at a time");
       return;
     }
+
+    // Check if event is private
+    if (event.is_private) {
+      const allowed = await isUserAllowedForPrivateEvent(event.event_id, profile.profile?.email || "");
+      if (!allowed) {
+        showBanner("❌ You are not allowed to join this private event.");
+        return;
+      }
+    }
+
     setEnrolledEvents([event]); // enroll in ONLY this event
 
     enrollProfileInEvent(event.event_id); //Add user to event
@@ -234,6 +244,7 @@ export default function EventsScreen() {
     event => !enrolledEvents.includes(event)
   );
 
+  
   const renderEventItem = (event: Event, enrolled = false) => (
     <ThemedView style={styles.eventItem}>
       <ThemedText>{event.event_name}</ThemedText>
@@ -273,6 +284,22 @@ export default function EventsScreen() {
   };
 
 
+
+  const isUserAllowedForPrivateEvent = async (eventId: string | number, userEmail: string) => {
+    const { data, error } = await supabase
+      .from("private_event_members")
+      .select("email")
+      .eq("event_id", eventId)
+      .eq("email", profile.profile?.email)
+      .single();
+  
+    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+      console.error("Error checking private event:", error);
+      return false;
+    }
+  
+    return !!data; // true if the user is allowed, false otherwise
+  };
 
   return (
     <ParallaxScrollView
