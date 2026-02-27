@@ -11,15 +11,10 @@ import { ThemedText } from '@/src/components/themed-text';
 import { ThemedView } from '@/src/components/themed-view';
 import { useState, useRef, useEffect } from 'react';
 
-<<<<<<< HEAD
-import { supabase } from '@/src/components/lib/supabase';
-import { useAuthContext } from '@/hooks/use-auth-context';
-=======
 import { supabase } from '@/src/components/lib/supabase'
 import { useAuthContext } from '@/hooks/use-auth-context'
 import CreateTeamModal from '@/src/components/ui/create-team-modal';
 
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
 
 type Event = {
   event_id: number;
@@ -33,8 +28,6 @@ type Event = {
   is_published: boolean;
 };
 
-<<<<<<< HEAD
-=======
 type Team = {
   id: number;
   size: number;
@@ -53,16 +46,12 @@ const sampleEvents = [
   { id: '4', name: '5K Charity Run' },
 ];
 
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
 export default function EventsScreen() {
   const [search, setSearch] = useState('');
   const [enrolledEvents, setEnrolledEvents] = useState<Event[]>([]);
   const [bannerMessage, setBannerMessage] = useState('');
   const bannerOpacity = useRef(new Animated.Value(0)).current;
 
-<<<<<<< HEAD
-  const profile = useAuthContext();
-=======
   const [teams, setTeams] = useState<Team[]>([]);
 
   const profile = useAuthContext()
@@ -75,7 +64,6 @@ export default function EventsScreen() {
 
   //Fetch events from Supabase
   const[events, setEvents] = useState<Event[]>([]);
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
 
   const [events, setEvents] = useState<Event[]>([]);
 
@@ -111,16 +99,6 @@ export default function EventsScreen() {
     fetchEvents();
   }, []);
 
-<<<<<<< HEAD
-  const enrollProfileInEvent = async (eventId: number) => {
-    await supabase.from('daily_steps').insert({
-      profile_id: profile.profile?.profile_id,
-      event_id: eventId,
-      dailysteps: 0,
-      stepdate: new Date().toISOString().split('T')[0],
-    });
-  };
-=======
   // Refetch enrolled event whenever events list changes to ensure we have the latest data
   useEffect(() => {
     fetchEnrolledEvent();
@@ -144,18 +122,14 @@ export default function EventsScreen() {
         console.error("Error enrolling: ", error)
       }
   }
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
 
   const unenrollProfileFromEvent = async (eventId: number) => {
     await supabase
       .from('daily_steps')
       .delete()
-      .eq('profile_id', profile.profile?.profile_id)
-      .eq('event_id', eventId);
-  };
+      .eq("profile_id", profile.profile?.profile_id)
+      .eq("event_id", eventId)  
 
-<<<<<<< HEAD
-=======
       if (error) {
         console.error("Error unenrolling: ", error)
       }
@@ -192,8 +166,6 @@ export default function EventsScreen() {
   }
 
 
-  // Banner display logic
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
   const showBanner = (message: string) => {
     setBannerMessage(message);
     Animated.timing(bannerOpacity, {
@@ -211,9 +183,6 @@ export default function EventsScreen() {
     }, 3000);
   };
 
-<<<<<<< HEAD
-  const handleEnroll = (event: Event) => {
-=======
 
   const getTeams = async (event: Event) => {
     const { data, error } = await supabase
@@ -235,15 +204,10 @@ export default function EventsScreen() {
   // UPDATED: Only 1 event active at a time
   // -------------------------
   const handleEnroll = async (event: Event) => {
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
     if (enrolledEvents.length >= 1) {
       showBanner('⚠️ You may only enroll in one event at a time');
       return;
     }
-<<<<<<< HEAD
-    setEnrolledEvents([event]);
-    enrollProfileInEvent(event.event_id);
-=======
 
     // Check if event is private
     if (event.is_private) {
@@ -261,7 +225,6 @@ export default function EventsScreen() {
     getTeams(event); //Fetch teams for the event
 
 
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
     showBanner('✅ You have enrolled in the event!');
   };
 
@@ -460,7 +423,6 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-<<<<<<< HEAD
 
   header: {
     alignItems: 'center',
@@ -521,8 +483,6 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
-});
-=======
   teamItem: {
     backgroundColor: '#c7f1ff',
     borderRadius: 12,
@@ -558,4 +518,3 @@ export const styles = StyleSheet.create({
 
   },
 });
->>>>>>> 7abc71b7aa81647bbf154f8578fcd30613611740
