@@ -2,12 +2,12 @@ import { supabase } from "@/components/lib/supabase/client";
 import {
   Field,
   // FieldContent,
-  // FieldDescription,
+  FieldDescription,
   // FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
-  // FieldSeparator,
+  FieldSeparator,
   FieldSet,
   // FieldTitle,
 } from "@/components/ui/field"
@@ -39,7 +39,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 
 type Event = {
-  event_id: number;
+  event_id: string;
   organizer: string;
   event_name: string;
   event_type: string;
@@ -48,93 +48,181 @@ type Event = {
   end_date: string;
   event_description: string;
   is_published: boolean;
+  allow_teams: boolean;
+  max_team_size: number;
 };
 
 export default function EventEdit() {
-    const[event, setEvent] = useState<Event | null>(null);
-    const { eventId } = useParams();
+  const [event, setEvent] = useState<Event | null>(null);
+  const { eventId } = useParams();
 
-    const [startDate, setStartDate] = React.useState<Date | undefined>();
-    const [endDate, setEndDate] = React.useState<Date | undefined>();
-    const [startOpen, setStartOpen] = React.useState(false);
-    const [endOpen, setEndOpen] = React.useState(false);
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [startOpen, setStartOpen] = useState(false);
+  const [endOpen, setEndOpen] = useState(false);
+  // const [fileError, setFileError] = React.useState("");
+  const [bannerFile, setBannerFile] = React.useState<File | null>(null);
 
-    const [title, setTitle] = React.useState("");
-    const [description, setDescription] = React.useState("");
-    const [eventType, setEventType] = React.useState("");
-    const [isPrivate, setIsPrivate] = React.useState(false);
-    const [isPublished, setIsPublished] = React.useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [eventType, setEventType] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
 
-    const [fileName, setFileName] = React.useState("No file chosen");
-    const [fileError, setFileError] = React.useState("");
+  const [fileName, setFileName] = useState("No file chosen");
+  const [fileError, setFileError] = useState("");
 
-    const initialDate = new Date("2025-06-01")
+  const initialDate = new Date("2025-06-01");
 
-    const [startMonth, setStartMonth] = React.useState<Date | undefined>(initialDate)
-    const [endMonth, setEndMonth] = React.useState<Date | undefined>(initialDate)
+  const [startMonth, setStartMonth] = useState<Date | undefined>(initialDate);
+  const [endMonth, setEndMonth] = useState<Date | undefined>(initialDate);
+
+  const [startValue, setStartValue] = useState("");
+  const [endValue, setEndValue] = useState("");
+
+  const [numTiers, setNumTiers] = useState<string>("0");
+  const [tierLevels, setTierLevels] = useState<number[]>([]);
+  const [tierIcons, setTierIcons] = useState<(File | null)[]>([]);
+  const [tierIconNames, setTierIconNames] = useState<(string | null)[]>([]);
+  const [existingIconUrls, setExistingIconUrls] = useState<(string | null)[]>([]);
+
+  const [allowTeams, setAllowTeams] = useState(false);
+  const [maxTeamSize, setMaxTeamSize] = useState<string>("0");
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchEvents();
+    fetchTiers();
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!event) return;
+
+    setTitle(event.event_name);
+    setDescription(event.event_description);
+    setStartDate(parseLocalDate(event.start_date));
+    setEndDate(parseLocalDate(event.end_date));
+    setIsPrivate(event.is_private);
+    setEventType(event.event_type);
+    setIsPublished(event.is_published);
+    setStartValue(formatDate(parseLocalDate(event.start_date)));
+    setEndValue(formatDate(parseLocalDate(event.end_date)));
+    setAllowTeams(event.allow_teams);
+    setMaxTeamSize(String(event.max_team_size));
+  }, [event]);
+
+  const fetchEvents = async () => {
+    if (!eventId) return;
+    const { data } = await supabase
+      .from("events")
+      .select("*")
+      .eq("event_id", eventId)
+      .maybeSingle();
+    if (data) setEvent(data);
+  };
+
+  const fetchTiers = async () => {
+    if (!eventId) return;
+
+    const { data } = await supabase
+      .from("tiers")
+      .select("num_tiers, benchmarks, icon_urls, icon_names")
+      .eq("event_id", eventId)
+      .single();
+
+    if (!data) return;
+
+    setNumTiers(String(data.num_tiers));
+    setTierLevels(data.benchmarks ?? []);
+    setTierIconNames(data.icon_names ?? []);
+    setExistingIconUrls(data.icon_urls ?? []);
+    setTierIcons(Array(data.num_tiers).fill(null)); // no new uploads yet
+    setTierIcons(Array(data.num_tiers).fill(null));
+  };
+
+  const handleTiersSelect = (value: string) => {
+    const n = parseInt(value, 10);
     
-    const [startValue, setStartValue] = React.useState("");
-    const [endValue, setEndValue] = React.useState("");
+    setNumTiers(value);
 
+    setTierLevels(prev => {
+      const copy = [...prev];
+      return copy.slice(0, n).concat(Array(Math.max(0, n - copy.length)).fill(0));
+    });
 
-    function isValidDate(date: Date | undefined) {
-      if (!date) {
-        return false
+    setTierIcons(prev => {
+      const copy = [...prev];
+      return copy.slice(0, n).concat(Array(Math.max(0, n - copy.length)).fill(null));
+    });
+
+    setTierIconNames(Array(n).fill(null));
+    setExistingIconUrls(Array(n).fill(null));
+
+  };
+
+  const handleInputChange = (index: number, value: number) => {
+    setTierLevels(prev => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  };
+
+  const handleValidatedTierFileChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setTierIcons(prev => {
+      const copy = [...prev];
+      copy[index] = file;
+      return copy;
+    });
+
+    setTierIconNames(prev => {
+      const copy = [...prev];
+      copy[index] = file.name;
+      return copy;
+    });
+  };
+
+  const handleValidatedBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) {
+        setFileName("No file chosen");
+        setFileError("");
+        setBannerFile(null);
+        return;
       }
-      return !isNaN(date.getTime())
-    }
-    
-    function formatDate(date: Date | undefined) {
-      if (!date) {
-        return ""
+  
+      const allowedTypes = ["image/png", "image/jpeg"];
+      if (!allowedTypes.includes(file.type)) {
+        setFileError("Only PNG or JPG images are allowed.");
+        setFileName("No file chosen");
+        setBannerFile(null);
+        return;
       }
-      return date.toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
-    }
-    
-    const navigate = useNavigate();
-
-
-
-    useEffect(() => {
-        fetchEvents();
-    }, [eventId]);
-
-    useEffect(() => {
-        if (!event) return;
-
-        setTitle(event.event_name);
-        setDescription(event?.event_description);
-        setStartDate(parseLocalDate(event.start_date));
-        setEndDate(parseLocalDate(event.end_date));
-        setIsPrivate(event.is_private);
-        setEventType(event.event_type);
-        setIsPublished(event.is_published);
-
-        setStartValue(formatDate(parseLocalDate(event.start_date)));
-        setEndValue(formatDate(parseLocalDate(event.end_date)));
-    }, [event]);
-
-    const fetchEvents = async () => {
-        if (!eventId) return;
-
-        const { data, error } = await supabase.from("events")
-        .select("*")
-        .eq('event_id', eventId).single();
-        if (error) {
-            console.error("Error fetching events:", error);
-        } else {
-            setEvent(data);
-        }
+  
+      const maxSize = 2 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setFileError("File is too large. Maximum size is 2MB.");
+        setFileName("No file chosen");
+        setBannerFile(null);
+        return;
+      }
+  
+      setFileError("");
+      setFileName(file.name);
+      setBannerFile(file);
     };
 
-    const updateEvent = async (id: number) => {
-        const {error} = await supabase
-        .from('events')
-        .update({
+  const updateEvent = async (id: string) => {
+    await supabase
+      .from("events")
+      .update({
         event_name: title,
         event_type: eventType,
         is_private: isPrivate,
@@ -142,58 +230,83 @@ export default function EventEdit() {
         end_date: endDate,
         event_description: description,
         is_published: isPublished,
+        allow_teams: allowTeams,
+        max_team_size: parseInt(maxTeamSize, 10),
+      })
+      .eq("event_id", id);
 
-        })
-        .eq('event_id', id)
+    const icon_urls: (string | null)[] = [];
+    const icon_names: (string | null)[] = [];
 
-        if (error) {
-        console.error("Error updating event: ", error);
-        }
-    };
+    for (let i = 0; i < tierLevels.length; i++) {
+      const file = tierIcons[i];
 
-    //Convert date string to date object in local timezone
-    function parseLocalDate(dateString: string) {
-        const [year, month, day] = dateString.split("-").map(Number);
-        return new Date(year, month - 1, day);
+      if (!file) {
+        icon_urls.push(existingIconUrls[i] ?? null);
+        icon_names.push(tierIconNames[i] ?? null);
+        continue;
+      }
+
+      const path = `tiers/${id}_${i}_${file.name}`;
+      await supabase.storage
+        .from("event-tier-icons")
+        .upload(path, file, { upsert: true });
+
+      icon_urls.push(
+        supabase.storage
+          .from("event-tier-icons")
+          .getPublicUrl(path).data.publicUrl
+      );
+      icon_names.push(file.name);
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        await updateEvent(event!.event_id);
-        
-        //Call fetchEvents to Refresh page data
-        await fetchEvents();
-    };
+    console.log("Tier payload", {
+      event_id: id,
+      num_tiers: parseInt(numTiers, 10),
+      benchmarks: tierLevels,
+      icon_urls,
+      icon_names,
+    });
 
-    const handleValidatedFileChange = (
-        e: React.ChangeEvent<HTMLInputElement>
-      ) => {
-        const file = e.target.files?.[0];
-    
-        if (!file) {
-          setFileName("No file chosen");
-          setFileError("");
-          return;
-        }
-    
-        const allowedTypes = ["image/png", "image/jpeg"];
-        if (!allowedTypes.includes(file.type)) {
-          setFileError("Only PNG or JPG images are allowed.");
-          setFileName("No file chosen");
-          return;
-        }
-    
-        const maxSize = 2 * 1024 * 1024; // 2MB
-        if (file.size > maxSize) {
-          setFileError("File is too large. Maximum size is 2MB.");
-          setFileName("No file chosen");
-          return;
-        }
-    
-        setFileError("");
-        setFileName(file.name);
-      };
+    if (parseInt(numTiers, 10) > 0) {
+      await supabase.from("tiers").upsert(
+        {
+          event_id: id,
+          num_tiers: parseInt(numTiers, 10),
+          benchmarks: tierLevels,
+          icon_urls,
+          icon_names,
+        },
+        { onConflict: "event_id" }
+      );
+    }
+  };
+
+  function parseLocalDate(dateString: string) {
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function formatDate(date: Date | undefined) {
+    if (!date) return "";
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  const isValidDate = (date: Date | undefined) => date instanceof Date && !isNaN(date.getTime());
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if(!event) return;
+
+    await updateEvent(event.event_id);
+
+    navigate("/events/" + eventId);
+  };
 
 
 
@@ -249,7 +362,7 @@ export default function EventEdit() {
                 id="banner"
                 accept=".png, .jpeg, .jpg"
                 className="hidden"
-                onChange={handleValidatedFileChange}
+                onChange={handleValidatedBannerFileChange}
               />
               <label
                 htmlFor="banner"
@@ -452,13 +565,150 @@ export default function EventEdit() {
         </FieldGroup>
       </FieldSet>
 
+      <FieldSeparator />
+
+        {/* Tier Configuration */}
+        <FieldSet>
+          <div className="mb-6">
+            <FieldLegend className="text-3xl font-bold text-gray-800 tracking-tight">
+              Tier Configuration
+            </FieldLegend>
+            <FieldDescription className="text-gray-600">
+              Use the dropdown to select the number of tiers (0-5). Enter steps required for each tier and upload an icon.
+            </FieldDescription>
+          </div>
+
+          <FieldGroup className="space-y-6">
+            <Field>
+              <Label htmlFor="numTiers" className="text-base font-medium text-gray-700">
+                Number of Tiers
+              </Label>
+              <Select value={numTiers} onValueChange={handleTiersSelect}>
+                <SelectTrigger id="numTiers" className="rounded-xl border border-gray-300 px-4 py-3 text-base focus:ring-2 focus:ring-blue-500/60">
+                  <SelectValue placeholder={numTiers} />
+                </SelectTrigger>
+                <SelectContent>
+                  {["0","1","2","3","4","5"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                </SelectContent>
+              </Select>
+
+              <div className="space-y-4 mt-4">
+                {tierLevels.map((_, index) => (
+                  <div key={index} className="space-y-2">
+                    <Label htmlFor={`level-${index}`} className="text-sm font-medium text-gray-700">
+                      Level {index + 1}
+                    </Label>
+                    <Input
+                      id={`level-${index}`}
+                      type="number"
+                      value={tierLevels[index] ?? ""}
+                      onChange={(e) =>
+                        handleInputChange(index, Number(e.target.value))
+                      }
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"                   
+                    />
+                    {/* <Input
+                      id={`level-${index}`}
+                      type="number"
+                      value={tierLevels[index] || ""}
+                      placeholder={`${tierLevels[index] ?? ""}`}
+                      onChange={(e) => handleInputChange(index, parseInt(e.target.value, 10))}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
+                    /> */}
+
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        id={`icon-${index}`}
+                        accept=".png, .jpeg, .jpg"
+                        className="hidden"
+                        onChange={(e) => handleValidatedTierFileChange(index, e)}
+                      />
+                      <label htmlFor={`icon-${index}`} className="px-4 py-3 border border-gray-300 rounded-xl text-sm cursor-pointer hover:bg-gray-50 transition">
+                        Choose Icon
+                      </label>
+                      <span className="text-sm text-gray-600">{tierIconNames[index] || "No file chosen"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSeparator />
+
+        {/* Teams Configuration */}
+        <FieldSet>
+          <div className="mb-6">
+            <FieldLegend className="text-3xl font-bold text-gray-800 tracking-tight">
+              Team Configuration
+            </FieldLegend>
+            <FieldGroup className="space-y-6">
+            <div>
+                <Field>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="allow-teams"
+                    checked={allowTeams}
+                    onCheckedChange={(checked) => {
+                      const enabled = !!checked;  
+                      setAllowTeams(enabled);
+
+                      if(!enabled)
+                      {
+                        setMaxTeamSize("0");
+                      }
+                      }
+                    }
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor="allow-teams" className="text-base font-medium text-gray-700">
+                      Enable Teams
+                    </Label>
+                    <p className="text-sm text-gray-500">
+                      Allow participants to form teams.
+                    </p>
+                  </div>
+                </div>
+              </Field>
+              {allowTeams && (
+                <Field>
+                  <div className="mt-4 space-y-2 ml-8">
+                    <Label
+                      htmlFor="max-team-size"
+                      className="text-base font-medium text-gray-700"
+                    >
+                      Maximum Team Size
+                    </Label>
+
+                    <Input
+                      id="max-team-size"
+                      type="number"
+                      min={1}
+                      value={maxTeamSize}
+                      onChange={(e) => setMaxTeamSize(e.target.value)}
+                      className="w-40 rounded-xl border border-gray-300 px-4 py-3 text-base
+                                focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
+                      required
+                    />
+
+                    <p className="text-sm text-gray-500">
+                      Maximum number of participants allowed on a team.
+                    </p>
+                  </div>
+                </Field>
+              )}
+            </div>
+          </FieldGroup>
+          </div>
+
+        </FieldSet>
+
       <div className="flex justify-end gap-4">
         <Button
           type="submit"
           className="px-6 py-3 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 transition"
-          onClick={() => {
-            navigate("/events/" + eventId);
-          }}
         >
           Save
         </Button>

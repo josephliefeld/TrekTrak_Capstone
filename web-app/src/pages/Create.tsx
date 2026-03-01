@@ -58,6 +58,9 @@ export default function Create() {
   const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
   const [tierIconNames, setTierIconNames] = React.useState<string[]>([]);
 
+  const [allowTeams, setAllowTeams] = React.useState(false);
+  const [maxTeamSize, setMaxTeamSize] = React.useState<string>("0");
+
   const navigate = useNavigate();
 
   // === Tier Handlers ===
@@ -169,7 +172,9 @@ export default function Create() {
           end_date: endDate?.toISOString().split("T")[0],
           is_private: isPrivate,
           banner_url,
-          is_published: false
+          is_published: false,
+          allow_teams: allowTeams,
+          max_team_size: maxTeamSize
         })
         .select("event_id")
         .single();
@@ -195,18 +200,13 @@ export default function Create() {
         icon_urls.push(url);
       }
 
-      if (tierLevels.length > 0) {
-        const { error: tierError } = await supabase
-          .from("tiers")
-          .insert({
-            event_id: eventId,
-            num_tiers: parseInt(numTiers, 10),
-            benchmarks: tierLevels,
-            icon_urls
-          });
-
-        if (tierError) throw tierError;
-      }
+      // Always insert tiers row
+      await supabase.from("tiers").insert({
+        event_id: eventId,
+        num_tiers: parseInt(numTiers, 10),
+        benchmarks: parseInt(numTiers, 10) > 0 ? tierLevels : [0],
+        icon_urls: parseInt(numTiers, 10) > 0 ? icon_urls : null
+      });
 
       alert("Event created!");
       navigate("/events");
@@ -497,6 +497,76 @@ export default function Create() {
               </div>
             </Field>
           </FieldGroup>
+        </FieldSet>
+
+        <FieldSeparator />
+
+        {/* Teams Configuration */}
+        <FieldSet>
+          <div className="mb-6">
+            <FieldLegend className="text-3xl font-bold text-gray-800 tracking-tight">
+              Team Configuration
+            </FieldLegend>
+            <FieldGroup className="space-y-6">
+            <div>
+                <Field>
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="allow-teams"
+                    checked={allowTeams}
+                    onCheckedChange={(checked) => {
+                      const enabled = !!checked;  
+                      setAllowTeams(enabled);
+
+                      if(!enabled)
+                      {
+                        setMaxTeamSize("0");
+                      }
+                      }
+                    }
+                  />
+                  <div className="grid gap-1">
+                    <Label htmlFor="allow-teams" className="text-base font-medium text-gray-700">
+                      Enable Teams
+                    </Label>
+                    <p className="text-sm text-gray-500">
+                      Allow participants to form teams.
+                    </p>
+                  </div>
+                </div>
+              </Field>
+              {allowTeams && (
+                <Field>
+                  <div className="mt-4 space-y-2 ml-8">
+                    <Label
+                      htmlFor="max-team-size"
+                      className="text-base font-medium text-gray-700"
+                    >
+                      Maximum Team Size
+                    </Label>
+
+                    <Input
+                      id="max-team-size"
+                      type="number"
+                      min={1}
+                      value={maxTeamSize}
+                      onChange={(e) => setMaxTeamSize(e.target.value)}
+                      placeholder="Enter max team size"
+                      className="w-40 rounded-xl border border-gray-300 px-4 py-3 text-base
+                                focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
+                      required
+                    />
+
+                    <p className="text-sm text-gray-500">
+                      Maximum number of participants allowed on a team.
+                    </p>
+                  </div>
+                </Field>
+              )}
+            </div>
+          </FieldGroup>
+          </div>
+
         </FieldSet>
 
         <Button
