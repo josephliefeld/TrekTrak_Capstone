@@ -92,11 +92,6 @@ export default function EventEdit() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchEvents();
-    fetchTiers();
-  }, [eventId]);
-
-  useEffect(() => {
     if (!event) return;
 
     setTitle(event.event_name);
@@ -170,6 +165,16 @@ export default function EventEdit() {
     setExistingIconUrls(data.icon_urls ?? []);
     setTierIcons(Array(data.num_tiers).fill(null));
   }, [eventId]);
+
+    // useEffect(() => {
+  //   fetchEvents();
+  //   fetchTiers();
+  // }, [eventId]);
+
+  useEffect(() => {
+    fetchEvents();
+    fetchTiers();
+    }, [fetchEvents, fetchTiers]);
 
   const handleTiersSelect = (value: string) => {
     const n = parseInt(value, 10);
