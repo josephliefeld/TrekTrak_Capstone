@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { CalendarIcon } from "lucide-react"
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -61,7 +61,7 @@ export default function EventEdit() {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   // const [fileError, setFileError] = React.useState("");
-  const [bannerFile, setBannerFile] = React.useState<File | null>(null);
+  const [_bannerFile, setBannerFile] = React.useState<File | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -112,17 +112,48 @@ export default function EventEdit() {
     setMaxTeamSize(String(event.max_team_size));
   }, [event]);
 
-  const fetchEvents = async () => {
+  // const fetchEvents = async () => {
+  //   if (!eventId) return;
+  //   const { data } = await supabase
+  //     .from("events")
+  //     .select("*")
+  //     .eq("event_id", eventId)
+  //     .maybeSingle();
+  //   if (data) setEvent(data);
+  // };
+
+  const fetchEvents = useCallback(async () => {
     if (!eventId) return;
+
     const { data } = await supabase
       .from("events")
       .select("*")
       .eq("event_id", eventId)
       .maybeSingle();
-    if (data) setEvent(data);
-  };
 
-  const fetchTiers = async () => {
+    if (data) setEvent(data);
+  }, [eventId]);
+
+  // const fetchTiers = async () => {
+  //   if (!eventId) return;
+
+  //   const { data } = await supabase
+  //     .from("tiers")
+  //     .select("num_tiers, benchmarks, icon_urls, icon_names")
+  //     .eq("event_id", eventId)
+  //     .single();
+
+  //   if (!data) return;
+// 
+  //   setNumTiers(String(data.num_tiers));
+  //   setTierLevels(data.benchmarks ?? []);
+  //   setTierIconNames(data.icon_names ?? []);
+  //   setExistingIconUrls(data.icon_urls ?? []);
+  //   setTierIcons(Array(data.num_tiers).fill(null)); // no new uploads yet
+  //   setTierIcons(Array(data.num_tiers).fill(null));
+  // };
+
+  const fetchTiers = useCallback(async () => {
     if (!eventId) return;
 
     const { data } = await supabase
@@ -137,9 +168,8 @@ export default function EventEdit() {
     setTierLevels(data.benchmarks ?? []);
     setTierIconNames(data.icon_names ?? []);
     setExistingIconUrls(data.icon_urls ?? []);
-    setTierIcons(Array(data.num_tiers).fill(null)); // no new uploads yet
     setTierIcons(Array(data.num_tiers).fill(null));
-  };
+  }, [eventId]);
 
   const handleTiersSelect = (value: string) => {
     const n = parseInt(value, 10);
