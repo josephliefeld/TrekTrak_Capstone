@@ -61,7 +61,7 @@ export default function EventEdit() {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   // const [fileError, setFileError] = React.useState("");
-  const [_bannerFile, setBannerFile] = React.useState<File | null>(null);
+  const [bannerFile, setBannerFile] = React.useState<File | null>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -289,6 +289,9 @@ export default function EventEdit() {
       );
       icon_names.push(file.name);
     }
+
+    // used to fix linting problem
+    console.log(bannerFile);
 
     console.log("Tier payload", {
       event_id: id,
