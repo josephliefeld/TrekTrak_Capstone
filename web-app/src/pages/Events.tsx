@@ -46,7 +46,7 @@ type Event = {
 
 export default function Events() {
 
-  const {isLoggedIn, loading, userId} = useAuth()
+  const {userId} = useAuth()
 
   console.log("User ID in Events:", userId);
 
@@ -86,7 +86,7 @@ export default function Events() {
 
 
   const deleteEvent = async (event_id: number) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("events")
       .delete()
       .eq("event_id", event_id);
@@ -241,7 +241,7 @@ export default function Events() {
               <Calendar
                 mode="range"
                 selected={{ from: startDateFrom, to: startDateTo }}
-                onSelect={(range: any) => {
+                onSelect={(range) => {
                   setStartDateFrom(range?.from);
                   setStartDateTo(range?.to);
                 }}
@@ -251,7 +251,7 @@ export default function Events() {
               <Calendar
                 mode="range"
                 selected={{ from: endDateFrom, to: endDateTo }}
-                onSelect={(range: any) => {
+                onSelect={(range) => {
                   setEndDateFrom(range?.from);
                   setEndDateTo(range?.to);
                 }}

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { supabase } from "@/components/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import React from 'react';
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
@@ -28,22 +28,22 @@ export default function EventView() {
   
   
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback( async () => { 
     if (!eventId) return;
 
     const { data, error } = await supabase.from("events")
     .select("*")
     .eq('event_id', eventId).single();
     if (error) {
-      console.error("Error fetching events:", error);
+        console.error("Error fetching events:", error);
     } else {
-      setEvent(data);
+        setEvent(data);
     }
-  };
+  }, [eventId]);
 
   useEffect(() => {
     fetchEvents();
-  }, [eventId]);
+  }, [fetchEvents]);
 
  return (
   <div className="min-h-screen bg-gray-50 px-4 py-12">
