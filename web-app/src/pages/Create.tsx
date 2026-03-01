@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from '../context/useAuth';
 
 export default function Create() {
   // === State Variables ===
@@ -61,6 +62,9 @@ export default function Create() {
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
   const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
   const [tierIconNames, setTierIconNames] = React.useState<string[]>([]);
+  
+  // === Users profile_id
+  const {userId} = useAuth()
 
   const navigate = useNavigate();
 
@@ -196,7 +200,8 @@ export default function Create() {
           end_date: endDate?.toISOString().split("T")[0],
           is_private: isPrivate,
           banner_url,
-          is_published: false
+          is_published: false,
+          owner_id: userId
         })
         .select("event_id")
         .single();

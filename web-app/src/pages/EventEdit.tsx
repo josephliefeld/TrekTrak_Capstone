@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { CalendarIcon } from "lucide-react"
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -99,9 +99,7 @@ export default function EventEdit() {
 
 
 
-    useEffect(() => {
-        fetchEvents();
-    }, [eventId]);
+
 
     useEffect(() => {
         if (!event) return;
@@ -118,18 +116,22 @@ export default function EventEdit() {
         setEndValue(formatDate(parseLocalDate(event.end_date)));
     }, [event]);
 
-    const fetchEvents = async () => {
-        if (!eventId) return;
+    const fetchEvents = useCallback( async () => { //useCallback prevents infinite loop in useEffect
+      if (!eventId) return;
 
-        const { data, error } = await supabase.from("events")
-        .select("*")
-        .eq('event_id', eventId).single();
-        if (error) {
-            console.error("Error fetching events:", error);
-        } else {
-            setEvent(data);
-        }
-    };
+      const { data, error } = await supabase.from("events")
+      .select("*")
+      .eq('event_id', eventId).single();
+      if (error) {
+          console.error("Error fetching events:", error);
+      } else {
+          setEvent(data);
+      }
+    }, [eventId]);
+
+    useEffect(() => {
+        fetchEvents();
+    }, [fetchEvents]);
 
     const updateEvent = async (id: number) => {
         const {error} = await supabase
@@ -162,8 +164,7 @@ export default function EventEdit() {
         
         await updateEvent(event!.event_id);
         
-        //Call fetchEvents to Refresh page data
-        await fetchEvents();
+
     };
 
     const handleValidatedFileChange = (
