@@ -1,42 +1,9 @@
 import { Link } from 'react-router-dom';
 import { supabase } from "@/components/lib/supabase/client";
 import { useEffect, useState } from "react";
-// import { Textarea } from "@/components/ui/textarea";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-//   // SelectGroup,
-//   // SelectLabel
-// } from "@/components/ui/select"
 import React from 'react';
 import { useParams } from "react-router-dom";
-// import {
-//   Field,
-  // FieldContent,
-  // FieldDescription,
-  // FieldError,
-  // FieldGroup,
-  // FieldLabel,
-  // FieldLegend,
-  // FieldSeparator,
-  // FieldSet,
-  // FieldTitle,
-// } from "@/components/ui/field"
-// import { ChevronDownIcon } from "lucide-react"
-// import { Button } from "@/components/ui/button"
-// import { Calendar } from "@/components/ui/calendar"
-// import {
-//   Popover,
-//   PopoverContent,
-//   PopoverTrigger,
-// } from "@/components/ui/popover"
-// import { Checkbox } from "@/components/ui/checkbox"
-// import { Label } from "@/components/ui/label"
-// import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "../context/useAuth";
 
 
 type Event = {
@@ -49,13 +16,16 @@ type Event = {
   end_date: string;
   event_description: string;
   is_published: boolean;
+  owner_id: string;
 };
 
 export default function EventView() {
   const[event, setEvent] = useState<Event | null>(null);
 
   const { eventId } = useParams();
-  console.log(eventId)
+
+  const {userId} = useAuth()
+  
   
 
   const fetchEvents = async () => {
@@ -106,12 +76,14 @@ export default function EventView() {
         >
           Statistics
         </Link>
-        <Link
+
+        {/* Only show edit button if owner of event */}
+        {userId === event?.owner_id && <Link
           to={`/events/edit/${event?.event_id}`}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
         >
           Edit
-        </Link>
+        </Link>}
       </nav>
 
       {/* Event Description Section */}

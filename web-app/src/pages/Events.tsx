@@ -17,6 +17,18 @@ import React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useAuth } from '../context/useAuth';
 
 type Event = {
   event_id: number;
@@ -28,10 +40,16 @@ type Event = {
   end_date: string;
   event_description: string;
   is_publshed: boolean;
-  image_url?: string;
+  banner_url?: string;
+  owner_id: string;
 };
 
 export default function Events() {
+
+  const {isLoggedIn, loading, userId} = useAuth()
+
+  console.log("User ID in Events:", userId);
+
 
   const [events, setEvents] = useState<Event[]>([]);
   const [viewEventId, setViewEventId] = useState<number[]>([]);
@@ -66,6 +84,20 @@ export default function Events() {
     }
   };
 
+
+  const deleteEvent = async (event_id: number) => {
+    const { data, error } = await supabase
+      .from("events")
+      .delete()
+      .eq("event_id", event_id);
+      
+      if (error) {
+        console.error("Error deleting event:", error);
+      } else {
+          fetchEvents(); // Refresh the list after deletion
+      }
+  }
+
   const addEventIdToView = (id: number) => {
     setViewEventId(prev =>
       prev.includes(id)
@@ -74,6 +106,7 @@ export default function Events() {
     );
   };
 
+  // Filter Functions
   const checkOngoing = (event: Event) => {
     const today = new Date();
     const start = new Date(event.start_date);
@@ -124,6 +157,7 @@ export default function Events() {
     setEndDateTo(undefined);
   };
 
+  // Apply search and filters
   let filteredEvents = events.filter(event =>
     searchCols.some(col =>
       String(event[col] ?? "").toLowerCase().includes(search.toLowerCase())
@@ -242,7 +276,7 @@ export default function Events() {
 
                   <div className="w-28 h-28 overflow-hidden rounded-xl bg-gray-300 flex-shrink-0">
                     <img
-                      src={event.image_url || "https://picsum.photos/200/300"}
+                      src={event.banner_url || "https://picsum.photos/200/300"}
                       alt={event.event_name}
                       className="w-full h-full object-cover"
                     />
@@ -264,9 +298,45 @@ export default function Events() {
 
                 {/* Right Side Buttons */}
                 <div className="flex items-center gap-10">
-                  <Link to={`/events/edit/${event.event_id}`}>
-                    <Button size="lg" >Edit</Button>
-                  </Link>
+                  
+                  {/* Display Edit and Delete Button only if event owner */}
+                  {event.owner_id === userId && (
+                    <div className='flex gap-4'>
+                      <Link to={`/events/edit/${event.event_id}`}>
+                        <Button size="lg" variant="default">Edit</Button>
+                      </Link>
+                    
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive">Delete</Button>
+                        </AlertDialogTrigger>
+
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your
+                              event and all associated data.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteEvent(event.event_id)}
+                              variant="destructive"
+                            >
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+
+                      
+                    </div>
+                  )}
+
+
 
                   <Button
                     size="lg"

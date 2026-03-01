@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/components/lib/supabase/client";
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/useAuth";
 
 interface Profile { 
   profile_id: string; 
@@ -9,7 +10,15 @@ interface Profile {
 
 type Event = {
   event_id: number;
+  organizer: string;
   event_name: string;
+  event_type: string;
+  is_private: boolean;
+  start_date: string;
+  end_date: string;
+  event_description: string;
+  is_published: boolean;
+  owner_id: string;
 };
 
 export default function Participants() {
@@ -18,6 +27,8 @@ export default function Participants() {
   const [loading, setLoading] = useState(true);
 
   const { eventId } = useParams();
+
+  const {userId} = useAuth()
 
   const fetchEvents = async () => {
     if (!eventId) return;
@@ -101,12 +112,13 @@ export default function Participants() {
             Statistics
           </Link>
 
-          <Link
+          {/* Only show edit button if owner of event */}
+          {userId === event?.owner_id && <Link
             to={`/events/edit/${event?.event_id}`}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
           >
             Edit
-          </Link>
+          </Link>}
         </nav>
 
         {/* Participants Section */}
