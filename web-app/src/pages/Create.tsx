@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from '../context/useAuth';
 
 export default function Create() {
   // === State Variables ===
@@ -61,6 +62,9 @@ export default function Create() {
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
   const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
   const [tierIconNames, setTierIconNames] = React.useState<string[]>([]);
+  
+  // === Users profile_id
+  const {userId} = useAuth()
 
   const [allowTeams, setAllowTeams] = React.useState(false);
   const [maxTeamSize, setMaxTeamSize] = React.useState<string>("0");
@@ -200,6 +204,7 @@ export default function Create() {
           is_private: isPrivate,
           banner_url,
           is_published: false,
+          owner_id: userId,
           allow_teams: allowTeams,
           max_team_size: maxTeamSize
         })

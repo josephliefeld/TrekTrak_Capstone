@@ -22,14 +22,18 @@ type Team = {
   size: number;
   name: string;
   event_id: number;
+  owner_id: number;
 }
 
-export default function CreateTeamModal({ modalVisible, setModalVisible, event, getTeams} : 
+export default function CreateTeamModal({ modalVisible, setModalVisible, event, getTeams, profileId, setProfileTeamId, setOwnsTeam} : 
     { 
         modalVisible: boolean, 
         setModalVisible: React.Dispatch<React.SetStateAction<boolean>>,
         event: Event,
-        getTeams: (event: Event) => Promise<void>
+        getTeams: (event: Event) => Promise<void>,
+        profileId: number,
+        setProfileTeamId: React.Dispatch<React.SetStateAction<number | null>>,
+        setOwnsTeam: React.Dispatch<React.SetStateAction<boolean>>
     }) 
 {
     const [teamName, setTeamName] = useState('');
@@ -49,9 +53,10 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
             .from('teams')
             .insert({
                 name: teamName,
-                size: 1,
-                event_id: event.event_id
-            })
+                size: 0,
+                event_id: event.event_id,
+                owner_id: profileId
+            }).select()
         if (error) {
             console.log('Error creating team:', error);
         } 
@@ -59,9 +64,12 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
             getTeams(event); //Refresh events displayed
             setTeamName('');
             setShowError(false);
+            setProfileTeamId(data[0].id); //Set profile's team_id to the new team's id
             setModalVisible(false);
+            setOwnsTeam(true);
         }
     }
+
 
 
     return (
@@ -99,7 +107,7 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
                         style={modalstyles.defaultButton}
                         >
                             <ThemedText>
-                                Create Team
+                                Create and Join
                             </ThemedText> 
                         </TouchableOpacity>
 
