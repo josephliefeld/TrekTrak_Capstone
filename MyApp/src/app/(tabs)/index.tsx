@@ -1,56 +1,69 @@
-import { Image } from 'expo-image'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, ScrollView, SafeAreaView } from 'react-native'
 
-import { HelloWave } from '@/src/components/hello-wave'
-import ParallaxScrollView from '@/src/components/parallax-scroll-view'
 import { ThemedText } from '@/src/components/themed-text'
 import { ThemedView } from '@/src/components/themed-view'
-import SignOutButton from '@/src/components/social-auth-buttons/sign-out-button'
 import { useAuthContext } from '@/hooks/use-auth-context'
 
 export default function HomeScreen() {
   const { profile } = useAuthContext()
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+    <SafeAreaView style={styles.safeContainer}>
+      <ThemedView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          {/* Profile Card */}
+          <ThemedView style={styles.card}>
+            <ThemedText type="subtitle">Username</ThemedText>
+            <ThemedText>{profile?.username}</ThemedText>
+
+            <ThemedText type="subtitle" style={{ marginTop: 12 }}>
+              Email
+            </ThemedText>
+            <ThemedText>{profile?.email}</ThemedText>
+          </ThemedView>
+        </ScrollView>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Username</ThemedText>
-        <ThemedText>{profile?.username}</ThemedText>
-        <ThemedText type="subtitle">Full name</ThemedText>
-        <ThemedText>{profile?.email}</ThemedText>
-      </ThemedView>
-      <SignOutButton />
-    </ParallaxScrollView>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  safeContainer: {
+    flex: 1,
+    backgroundColor: '#fff', // ensures background extends into the safe area
+  },
+  container: {
+    flex: 1,
+  },
+
+  content: {
+    padding: 20,
+    paddingTop: 8,
+  },
+
+  welcomeContainer: {
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 32,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  welcomeText: {
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  subtitle: {
+    marginTop: 8,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+
+  card: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    gap: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
 })
