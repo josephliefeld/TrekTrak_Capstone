@@ -35,14 +35,6 @@ type Team = {
 
 
 
-
-const sampleEvents = [
-  { id: '1', name: 'Morning Run' },
-  { id: '2', name: 'TrekTrak Global Challenge' },
-  { id: '3', name: 'Evening Yoga Session' },
-  { id: '4', name: '5K Charity Run' },
-];
-
 export default function EventsScreen() {
   const [search, setSearch] = useState('');
   const [enrolledEvents, setEnrolledEvents] = useState<Event[]>([]);
