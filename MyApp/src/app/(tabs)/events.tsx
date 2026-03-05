@@ -41,19 +41,58 @@ export default function EventsScreen() {
   const[events, setEvents] = useState<Event[]>([]);
 
 
-  async function fetchEvents() {
-      const { data, error } = await supabase.from<"events", Event>("events").select("*");
-      if (error) {
-        console.error("Error fetching events:", error);
-      } else {
-        setEvents(data ?? []);
-      }
-  };
+  // async function fetchEvents() {
+  //     const { data, error } = await supabase.from<"events", Event>("events").select("*");
+  //     if (error) {
+  //       console.error("Error fetching events:", error);
+  //     } else {
+  //       setEvents(data ?? []);
+  //     }
+  // };
 
-  useEffect(() => {
-    fetchEvents();
-    console.log("Fetched", events)
-  }, []);
+  []>([]);
+
+  // Fetch allowed private events for this user
+  const fetchAllowedPrivateEvents = async (email: string) => {
+    const { data, error } = await supabase
+      .from("private_event_members")
+      .select("event_id")
+      .eq("email", email);
+
+    if (error) {
+      console.error("Error fetching allowed private events:", error);
+      return [];
+    }
+
+    return data.map(row => row.event_id);
+  };
+  
+
+    useEffect(() => {
+      const loadEvents = async () => {
+        const { data: allEvents, error } = await supabase
+          .from("events")
+          .select("*");
+  
+        if (error) {
+          console.error("Error fetching events:", error);
+          return;
+        }
+  
+        const allowedPrivateEventIds = await fetchAllowedPrivateEvents(
+          profile.profile?.email || ""
+        );
+  
+        const visibleEvents = allEvents.filter(event => {
+          if (!event.is_private) return true; // public event
+          return allowedPrivateEventIds.includes(event.event_id); // private event only if allowed
+        });
+  
+        setEvents(visibleEvents);
+      };
+  
+      loadEvents();
+    }, []);
 
   // Add user to daily_steps table for event they enrolled in
   // TODO: Replace profile_id with users logged in id once auth is completed
@@ -115,13 +154,13 @@ export default function EventsScreen() {
     }
 
     // Check if event is private
-    if (event.is_private) {
-      const allowed = await isUserAllowedForPrivateEvent(event.event_id, profile.profile?.email || "");
-      if (!allowed) {
-        showBanner("❌ You are not allowed to join this private event.");
-        return;
-      }
-    }
+    // if (event.is_private) {
+    //   const allowed = await isUserAllowedForPrivateEvent(event.event_id, profile.profile?.email || "");
+    //   if (!allowed) {
+    //     showBanner("❌ You are not allowed to join this private event.");
+    //     return;
+    //   }
+    // }
 
     setEnrolledEvents([event]); // enroll in ONLY this event
 
@@ -162,21 +201,21 @@ export default function EventsScreen() {
     </ThemedView>
   );
 
-  const isUserAllowedForPrivateEvent = async (eventId: string | number, userEmail: string) => {
-    const { data, error } = await supabase
-      .from("private_event_members")
-      .select("email")
-      .eq("event_id", eventId)
-      .eq("email", profile.profile?.email)
-      .single();
+  // const isUserAllowedForPrivateEvent = async (eventId: string | number, userEmail: string) => {
+  //   const { data, error } = await supabase
+  //     .from("private_event_members")
+  //     .select("email")
+  //     .eq("event_id", eventId)
+  //     .eq("email", profile.profile?.email)
+  //     .single();
   
-    if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
-      console.error("Error checking private event:", error);
-      return false;
-    }
+  //   if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+  //     console.error("Error checking private event:", error);
+  //     return false;
+  //   }
   
-    return !!data; // true if the user is allowed, false otherwise
-  };
+  //   return !!data; // true if the user is allowed, false otherwise
+  // };
 
   return (
     <ParallaxScrollView

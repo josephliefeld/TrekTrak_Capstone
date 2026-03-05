@@ -5,14 +5,19 @@ import { useState } from 'react';
 export default function SignUpScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
 
   const handleSignUp = () => {
-    if (username && password) {
-      Alert.alert('Success', `User "${username}" created!`);
-      router.replace('/(auth)/login'); // go back to login page after signup
-    } else {
-      Alert.alert('Error', 'Please enter both username and password');
+    setErrorMessage('');
+
+    if (!username || !password) {
+      setErrorMessage('Please enter both username and password');
+      console.log("Please enter both username and password")
+      return;
     }
+
+    router.replace('/(auth)/login');
   };
 
   return (
@@ -32,6 +37,22 @@ export default function SignUpScreen() {
         value={password}
         onChangeText={setPassword}
       />
+
+      {errorMessage !== '' && (
+        <Text
+          style={{
+            color: 'red',
+            backgroundColor: '#fee2e2',
+            padding: 10,
+            borderRadius: 6,
+            marginBottom: 12,
+            width: '80%',
+            textAlign: 'center',
+          }}
+        >
+          {errorMessage}
+        </Text>
+      )}
 
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
         <Text style={styles.buttonText}>Create Account</Text>

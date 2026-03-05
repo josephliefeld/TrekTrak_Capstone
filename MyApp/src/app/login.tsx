@@ -11,12 +11,15 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [focusedInput, setFocusedInput] = useState<'email' | 'password' | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+
 
   const colorScheme = useColorScheme() // "light" or "dark"
   const isDark = colorScheme === 'dark'
 
   const handleLogin = async () => {
     setLoading(true)
+    setErrorMessage('')
 
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -25,7 +28,7 @@ export default function LoginScreen() {
 
     if (authError || !authData?.user) {
       setLoading(false)
-      Alert.alert('Login failed', authError?.message ?? 'No user returned')
+      setErrorMessage(authError?.message ?? 'No user returned')
       return
     }
 
@@ -40,15 +43,15 @@ export default function LoginScreen() {
     setLoading(false)
 
     if (profileError || !profile) {
-      Alert.alert('Login failed', 'Could not fetch user profile.')
+      setErrorMessage('Could not fetch user profile.')
       return
     }
 
     if (profile.role !== 2) {
       // Not a participant
       await supabase.auth.signOut() // optional, log them out immediately
-      Alert.alert('Access denied', 'Only participants are allowed to log in on this app.')
-      //console.log("Only participants allowed!")
+      setErrorMessage('Only participants are allowed to log in on this app.')
+      console.log("Only participants allowed!")
       return
     }
 
@@ -101,6 +104,22 @@ export default function LoginScreen() {
           onBlur={() => setFocusedInput(null)}
         />
 
+        {errorMessage !== '' && (
+          <Text
+            style={{
+              color: 'red',
+              backgroundColor: '#fee2e2',
+              padding: 10,
+              borderRadius: 6,
+              marginTop: 12,
+              width: '75%',
+              textAlign: 'center',
+            }}
+          >
+            {errorMessage}
+          </Text>
+        )}
+
         <Pressable
           onPress={handleLogin}
           disabled={loading}
@@ -139,7 +158,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   input: {
-    width: '50%',
+    width: '75%',
     borderWidth: 1,
     borderRadius: 6,
     padding: 12,
