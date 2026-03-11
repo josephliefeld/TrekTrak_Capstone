@@ -11,6 +11,7 @@ import CreateTeamModal from '@/src/components/ui/create-team-modal';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { IconSymbol } from '@/src/components/ui/icon-symbol';
 
+// joe made changes
 
 type Event = {
   event_id: number;
