@@ -1,176 +1,195 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
   FlatList,
   StyleSheet,
   View,
   ActivityIndicator,
-} from 'react-native';
-import { Image } from 'expo-image';
-import ParallaxScrollView from '@/src/components/parallax-scroll-view';
-import { ThemedText } from '@/src/components/themed-text';
-import { ThemedView } from '@/src/components/themed-view';
+} from 'react-native'
+
+import { ThemedText } from '@/src/components/themed-text'
+import { ThemedView } from '@/src/components/themed-view'
 
 interface LeaderboardEntry {
-  id: string;
-  username: string;
-  score: number;
-  event_name: string;
+  id: string
+  username: string
+  score: number
+  event_name: string
 }
 
 export default function LeaderboardsScreen() {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      setLoading(true);
+      setLoading(true)
+
       try {
         const mockData: LeaderboardEntry[] = [
           { id: '1', username: 'KekoaY', score: 9820, event_name: 'Step Challenge' },
           { id: '2', username: 'MariaL', score: 9475, event_name: 'Step Challenge' },
           { id: '3', username: 'JohnS', score: 9050, event_name: 'Step Challenge' },
-        ];
-        setLeaderboard(mockData);
-      } catch (error) {
-        console.error('Error loading leaderboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+        ]
 
-    fetchLeaderboard();
-  }, []);
+        setLeaderboard(mockData)
+      } catch (error) {
+        console.error('Error loading leaderboard:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchLeaderboard()
+  }, [])
+
+  const getRankColor = (rank: number) => {
+    if (rank === 0) return '#fbbf24' // gold
+    if (rank === 1) return '#9ca3af' // silver
+    if (rank === 2) return '#d97706' // bronze
+    return '#e5e7eb'
+  }
 
   const renderItem = ({
     item,
     index,
   }: {
-    item: LeaderboardEntry;
-    index: number;
+    item: LeaderboardEntry
+    index: number
   }) => (
-    <ThemedView style={styles.card}>
-      <View style={styles.rankBadge}>
-        <ThemedText style={styles.rankText}>#{index + 1}</ThemedText>
+    <View style={styles.card}>
+
+      <View
+        style={[
+          styles.rankBadge,
+          { backgroundColor: getRankColor(index) },
+        ]}
+      >
+        <ThemedText style={styles.rankText}>
+          {index + 1}
+        </ThemedText>
       </View>
 
-      <ThemedView style={styles.cardContent}>
-        <ThemedText type="subtitle">{item.username}</ThemedText>
+      <View style={styles.cardContent}>
+        <ThemedText style={styles.username}>
+          {item.username}
+        </ThemedText>
+
         <ThemedText style={styles.metaText}>
           {item.event_name}
         </ThemedText>
-      </ThemedView>
+      </View>
 
       <ThemedText style={styles.scoreText}>
         {item.score.toLocaleString()}
       </ThemedText>
-    </ThemedView>
-  );
+
+    </View>
+  )
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.headerImage}
-        />
-      }
-    >
-      {/* Header */}
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">🥇 Leaderboards</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Top performers across TrekTrak events
-        </ThemedText>
-      </ThemedView>
+    <ThemedView style={styles.container}>
 
-      {/* Content */}
-      <ThemedView style={styles.content}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#1D3D47" />
-        ) : leaderboard.length > 0 ? (
-          <FlatList
-            data={leaderboard}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={styles.list}
-          />
-        ) : (
+      <View style={styles.header}>
+        <ThemedText type="title">Leaderboards</ThemedText>
+
+        <ThemedText style={styles.subtitle}>
+          Top performers across events
+        </ThemedText>
+      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" />
+        </View>
+      ) : leaderboard.length > 0 ? (
+        <FlatList
+          data={leaderboard}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+        />
+      ) : (
+        <View style={styles.center}>
           <ThemedText style={styles.emptyText}>
-            No leaderboard data yet. Check back soon!
+            No leaderboard data yet.
           </ThemedText>
-        )}
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+        </View>
+      )}
+
+    </ThemedView>
+  )
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    height: 170,
-    width: 280,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
+
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff'
   },
 
   header: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  subtitle: {
-    marginTop: 6,
-    opacity: 0.7,
+    marginBottom: 20
   },
 
-  content: {
-    paddingHorizontal: 16,
+  subtitle: {
+    marginTop: 4,
+    opacity: 0.6
   },
+
   list: {
-    gap: 12,
+    gap: 12
   },
 
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 14,
-    borderRadius: 14,
-    elevation: 2,
+    backgroundColor: '#f9fafb',
+    padding: 16,
+    borderRadius: 12
   },
 
   rankBadge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#E6F0F4',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 12
   },
+
   rankText: {
     fontWeight: '700',
-    color: '#1D3D47',
+    color: '#111827'
   },
 
   cardContent: {
-    flex: 1,
-    gap: 4,
+    flex: 1
   },
+
+  username: {
+    fontWeight: '600',
+    fontSize: 16
+  },
+
   metaText: {
     fontSize: 12,
-    opacity: 0.6,
+    opacity: 0.6
   },
 
   scoreText: {
     fontWeight: '700',
     fontSize: 16,
-    color: '#1D3D47',
+    color: '#2563eb'
   },
 
   emptyText: {
-    textAlign: 'center',
-    marginTop: 24,
-    opacity: 0.7,
+    opacity: 0.7
   },
-});
+
+  center: {
+    marginTop: 40,
+    alignItems: 'center'
+  }
+
+})

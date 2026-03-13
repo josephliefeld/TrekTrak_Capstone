@@ -1,26 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Image } from 'expo-image';
-import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import ParallaxScrollView from '@/src/components/parallax-scroll-view';
-import { ThemedText } from '@/src/components/themed-text';
-import { ThemedView } from '@/src/components/themed-view';
-import { useRouter } from 'expo-router';
-import { supabase } from '@/src/components/lib/supabase';
+import { useEffect, useState } from 'react'
+import { StyleSheet, TouchableOpacity, ActivityIndicator, View } from 'react-native'
+import { ThemedText } from '@/src/components/themed-text'
+import { ThemedView } from '@/src/components/themed-view'
+import { useRouter } from 'expo-router'
+import { supabase } from '@/src/components/lib/supabase'
 
 type Profile = {
-  profile_id: string;
-  username: string;
-  email: string;
-};
+  profile_id: string
+  username: string
+  email: string
+}
 
 export default function ProfileScreen() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const handleEditProfile = () => {
-    router.push('../profile_edit/editProfile');
-  };
+    router.push('../profile_edit/editProfile')
+  }
 
   useEffect(() => {
     async function loadProfile() {
@@ -28,150 +26,146 @@ export default function ProfileScreen() {
         const {
           data: { user },
           error: authError,
-        } = await supabase.auth.getUser();
+        } = await supabase.auth.getUser()
 
-        if (authError || !user) throw new Error('No authenticated user');
+        if (authError || !user) throw new Error('No authenticated user')
 
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('profile_id', user.id)
-          .single();
+          .single()
 
-        if (error) throw error;
+        if (error) throw error
 
-        setProfile(data);
+        setProfile(data)
       } catch (error) {
-        console.error(error);
+        console.error(error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
 
-    loadProfile();
-  }, []);
+    loadProfile()
+  }, [])
 
   if (loading) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1D3D47" />
+        <ActivityIndicator size="large" />
       </ThemedView>
-    );
+    )
   }
 
   if (!profile) {
-    return <ThemedText>Profile not found.</ThemedText>;
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ThemedText>Profile not found.</ThemedText>
+      </ThemedView>
+    )
   }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      {/* Header */}
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">👤 Profile</ThemedText>
+    <ThemedView style={styles.container}>
+
+      <View style={styles.header}>
+        <ThemedText type="title">Profile</ThemedText>
         <ThemedText style={styles.subtitle}>
           Manage your account details
         </ThemedText>
-      </ThemedView>
+      </View>
 
-      {/* Profile Info Card */}
-      <ThemedView style={styles.card}>
-        <ThemedView style={styles.infoRow}>
+      <View style={styles.card}>
+
+        <View style={styles.infoRow}>
           <ThemedText style={styles.label}>Username</ThemedText>
           <ThemedText style={styles.value}>{profile.username}</ThemedText>
-        </ThemedView>
+        </View>
 
-        <ThemedView style={styles.divider} />
+        <View style={styles.divider} />
 
-        <ThemedView style={styles.infoRow}>
+        <View style={styles.infoRow}>
           <ThemedText style={styles.label}>Email</ThemedText>
           <ThemedText style={styles.value}>{profile.email}</ThemedText>
-        </ThemedView>
-      </ThemedView>
+        </View>
 
-      {/* Actions */}
-      <ThemedView style={styles.actions}>
+      </View>
+
+      <View style={styles.actions}>
         <TouchableOpacity style={styles.primaryButton} onPress={handleEditProfile}>
           <ThemedText style={styles.primaryButtonText}>
             Change Password
           </ThemedText>
         </TouchableOpacity>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+      </View>
+
+    </ThemedView>
+  )
 }
 
 const styles = StyleSheet.create({
-  reactLogo: {
-    height: 170,
-    width: 280,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    opacity: 0.2,
+
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff'
+  },
+
+  header: {
+    marginBottom: 24
+  },
+
+  subtitle: {
+    marginTop: 4,
+    opacity: 0.6
   },
 
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  header: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  subtitle: {
-    marginTop: 6,
-    opacity: 0.7,
+    justifyContent: 'center'
   },
 
   card: {
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 16,
-    elevation: 2,
-    gap: 12,
+    backgroundColor: '#f9fafb',
+    padding: 18,
+    borderRadius: 14,
+    gap: 16
   },
 
   infoRow: {
-    gap: 4,
+    gap: 4
   },
+
   label: {
     fontSize: 12,
-    opacity: 0.6,
+    opacity: 0.6
   },
+
   value: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600'
   },
 
   divider: {
     height: 1,
-    backgroundColor: '#eee',
+    backgroundColor: '#e5e7eb'
   },
 
   actions: {
-    marginTop: 24,
-    paddingHorizontal: 16,
+    marginTop: 30
   },
 
   primaryButton: {
-    backgroundColor: '#1D3D47',
+    backgroundColor: '#2563eb',
     paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
+    borderRadius: 12,
+    alignItems: 'center'
   },
+
   primaryButtonText: {
     color: '#fff',
-    fontWeight: '600',
-  },
-});
+    fontWeight: '600'
+  }
+
+})

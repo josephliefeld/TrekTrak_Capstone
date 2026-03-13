@@ -1,470 +1,298 @@
-import { Image } from 'expo-image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native';
-import { Pedometer } from 'expo-sensors';
-import ParallaxScrollView from '@/src/components/parallax-scroll-view';
-import { ThemedText } from '@/src/components/themed-text';
-import { ThemedView } from '@/src/components/themed-view';
-import { supabase } from '@/src/components/lib/supabase';
-import { useAuthContext } from '@/hooks/use-auth-context';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native'
+import { Pedometer } from 'expo-sensors'
+
+import { ThemedText } from '@/src/components/themed-text'
+import { ThemedView } from '@/src/components/themed-view'
+import { supabase } from '@/src/components/lib/supabase'
+import { useAuthContext } from '@/hooks/use-auth-context'
 
 export default function StatsScreen() {
-  const { session, profile } = useAuthContext();
+  const { session, profile } = useAuthContext()
 
-  const todayISO = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayISO = useMemo(() => new Date().toISOString().split('T')[0], [])
 
-  const [stepsToday, setStepsToday] = useState<number | null>(null);
-  const [totalSteps, setTotalSteps] = useState<number | null>(null);
-  const [activeEventsCount, setActiveEventsCount] = useState<number | null>(null);
-  const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [syncing, setSyncing] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [stepsToday, setStepsToday] = useState<number | null>(null)
+  const [totalSteps, setTotalSteps] = useState<number | null>(null)
+  const [activeEventsCount, setActiveEventsCount] = useState<number | null>(null)
+  const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [syncing, setSyncing] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
 
-  const userId = session?.user?.id ?? profile?.profile_id ?? null;
+  const userId = session?.user?.id ?? profile?.profile_id ?? null
 
-  const liveWatchBaselineRef = useRef<number>(0);
-  const liveWatchRef = useRef<ReturnType<typeof Pedometer.watchStepCount> | null>(null);
-  const pendingSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const liveWatchBaselineRef = useRef<number>(0)
+  const liveWatchRef = useRef<any>(null)
+  const pendingSyncTimerRef = useRef<any>(null)
 
   const formatNumber = useCallback((n: number | null) => {
-    if (n === null || Number.isNaN(n)) return '—';
-    try {
-      return n.toLocaleString();
-    } catch {
-      return String(n);
-    }
-  }, []);
-
-  const pickOverallStepsForDay = useCallback((rows: any[] | null | undefined) => {
-    if (!rows || rows.length === 0) return null;
-
-    // Prefer explicit `totaldailysteps` if your schema is populating it.
-    for (const r of rows) {
-      const v = typeof r?.totaldailysteps === 'string' ? Number(r.totaldailysteps) : r?.totaldailysteps;
-      if (typeof v === 'number' && Number.isFinite(v)) return v;
-    }
-
-    // Otherwise, fall back to summing `dailysteps` across rows (e.g., per-event rows).
-    let sum = 0;
-    let hasAny = false;
-    for (const r of rows) {
-      const v = typeof r?.dailysteps === 'string' ? Number(r.dailysteps) : r?.dailysteps;
-      if (typeof v === 'number' && Number.isFinite(v)) {
-        sum += v;
-        hasAny = true;
-      }
-    }
-
-    return hasAny ? sum : null;
-  }, []);
+    if (n === null || Number.isNaN(n)) return '—'
+    return n.toLocaleString()
+  }, [])
 
   const writeTodayOverallStepsToSupabase = useCallback(
     async (steps: number) => {
-      if (!userId) return;
-      const clamped = Math.max(0, Math.min(steps, 100000));
+      if (!userId) return
 
-      const { data: existing, error: existingErr } = await supabase
+      const { data: existing } = await supabase
         .from('daily_steps')
         .select('id')
         .eq('profile_id', userId)
         .is('event_id', null)
         .eq('date', todayISO)
-        .order('id', { ascending: false })
         .limit(1)
-        .maybeSingle();
-
-      if (existingErr) throw existingErr;
+        .maybeSingle()
 
       if (existing?.id) {
-        const { error: updateErr } = await supabase
+        await supabase
           .from('daily_steps')
-          .update({ dailysteps: clamped, totaldailysteps: clamped, date: todayISO })
-          .eq('id', existing.id);
-        if (updateErr) throw updateErr;
+          .update({ dailysteps: steps, totaldailysteps: steps })
+          .eq('id', existing.id)
       } else {
-        const { error: insertErr } = await supabase.from('daily_steps').insert({
+        await supabase.from('daily_steps').insert({
           profile_id: userId,
           event_id: null,
-          dailysteps: clamped,
-          totaldailysteps: clamped,
+          dailysteps: steps,
+          totaldailysteps: steps,
           date: todayISO,
-        });
-        if (insertErr) throw insertErr;
+        })
       }
     },
-    [todayISO, userId],
-  );
+    [todayISO, userId]
+  )
 
   const fetchStats = useCallback(async () => {
-    if (!userId) {
-      setLoading(false);
-      setErrorMessage('Not logged in.');
-      return;
-    }
+    if (!userId) return
 
-    setLoading(true);
-    setErrorMessage(null);
+    setLoading(true)
 
     try {
-      // All-time total steps: sum daily overall rows (event_id is null)
-      const { data: allTimeRows, error: allTimeErr } = await supabase
+      const { data: allTimeRows } = await supabase
         .from('daily_steps')
-        .select('dailysteps, totaldailysteps')
+        .select('dailysteps')
         .eq('profile_id', userId)
-        .is('event_id', null);
+        .is('event_id', null)
 
-      if (allTimeErr) throw allTimeErr;
+      let total = 0
+      for (const r of allTimeRows ?? []) total += r?.dailysteps ?? 0
+      setTotalSteps(total)
 
-      let allTimeTotal = 0;
-      for (const r of allTimeRows ?? []) {
-        const vRaw =
-          typeof r?.totaldailysteps === 'number'
-            ? r.totaldailysteps
-            : typeof r?.dailysteps === 'number'
-              ? r.dailysteps
-              : 0;
-        allTimeTotal += Number.isFinite(vRaw) ? vRaw : 0;
-      }
-      setTotalSteps(allTimeTotal);
-
-      // Steps today from daily_steps
-      // Your real schema columns: id, profile_id, event_id, dailysteps, date, totaldailysteps
-      const { data: dailyRows, error: dailyErr } = await supabase
+      const { data: dailyRows } = await supabase
         .from('daily_steps')
-        .select('event_id, dailysteps, totaldailysteps, date')
+        .select('dailysteps')
         .eq('profile_id', userId)
-        .eq('date', todayISO);
+        .eq('date', todayISO)
 
-      if (dailyErr) throw dailyErr;
-      setStepsToday(pickOverallStepsForDay(dailyRows ?? []));
+      setStepsToday(dailyRows?.[0]?.dailysteps ?? 0)
 
-      // Active events count (approx): number of enrolled events in daily_steps
-      // (rows where event_id is not null) - this avoids joining events.
-      const { count, error: countErr } = await supabase
+      const { count } = await supabase
         .from('daily_steps')
         .select('event_id', { count: 'exact', head: true })
         .eq('profile_id', userId)
-        .not('event_id', 'is', null);
+        .not('event_id', 'is', null)
 
-      if (countErr) throw countErr;
-      setActiveEventsCount(typeof count === 'number' ? count : null);
+      setActiveEventsCount(count ?? 0)
 
-      setLastUpdatedAt(new Date());
+      setLastUpdatedAt(new Date())
     } catch (e: any) {
-      const msg =
-        typeof e?.message === 'string'
-          ? e.message
-          : 'Failed to load stats from Supabase.';
-      setErrorMessage(msg);
+      setErrorMessage(e?.message ?? 'Failed to load stats')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [pickOverallStepsForDay, todayISO, userId]);
+  }, [todayISO, userId])
 
   const syncTodayStepsFromPhone = useCallback(async () => {
-    if (!userId) {
-      setErrorMessage('Not logged in.');
-      return;
-    }
-
-    setSyncing(true);
-    setErrorMessage(null);
+    setSyncing(true)
 
     try {
-      const available = await Pedometer.isAvailableAsync();
-      setPedometerAvailable(available);
+      const available = await Pedometer.isAvailableAsync()
+      setPedometerAvailable(available)
 
-      if (!available) {
-        setErrorMessage('Pedometer is not available on this device.');
-        return;
-      }
+      if (!available) return
 
-      const end = new Date();
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
+      const end = new Date()
+      const start = new Date()
+      start.setHours(0, 0, 0, 0)
 
-      const result = await Pedometer.getStepCountAsync(start, end);
-      const steps = result?.steps ?? 0;
+      const result = await Pedometer.getStepCountAsync(start, end)
 
-      setStepsToday(steps);
-      await writeTodayOverallStepsToSupabase(steps);
+      const steps = result?.steps ?? 0
+      setStepsToday(steps)
 
-      await fetchStats();
-    } catch (e: any) {
-      const msg =
-        typeof e?.message === 'string'
-          ? e.message
-          : 'Failed to sync steps to Supabase.';
-      setErrorMessage(msg);
+      await writeTodayOverallStepsToSupabase(steps)
+
+      await fetchStats()
     } finally {
-      setSyncing(false);
+      setSyncing(false)
     }
-  }, [fetchStats, todayISO, userId]);
+  }, [fetchStats])
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    fetchStats()
+  }, [fetchStats])
 
-  const startLivePedometerWatch = useCallback(async () => {
-    if (!userId) return;
-
-    // cleanup existing watcher
-    if (liveWatchRef.current) {
-      try {
-        liveWatchRef.current.remove();
-      } catch {
-        // ignore
-      }
-      liveWatchRef.current = null;
-    }
-
-    const available = await Pedometer.isAvailableAsync();
-    setPedometerAvailable(available);
-    if (!available) return;
-
-    // baseline = steps since midnight right now
-    const end = new Date();
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const baselineRes = await Pedometer.getStepCountAsync(start, end);
-    const baseline = baselineRes?.steps ?? 0;
-    liveWatchBaselineRef.current = baseline;
-    setStepsToday(baseline);
-
-    // kick an initial write (debounced below as well)
-    try {
-      await writeTodayOverallStepsToSupabase(baseline);
-      setLastUpdatedAt(new Date());
-    } catch (e: any) {
-      setErrorMessage(typeof e?.message === 'string' ? e.message : 'Failed to sync steps to Supabase.');
-    }
-
-    liveWatchRef.current = Pedometer.watchStepCount((result) => {
-      const liveTotal = liveWatchBaselineRef.current + (result?.steps ?? 0);
-      setStepsToday(liveTotal);
-
-      // debounce writes to Supabase (avoid writing every step)
-      if (pendingSyncTimerRef.current) clearTimeout(pendingSyncTimerRef.current);
-      pendingSyncTimerRef.current = setTimeout(async () => {
-        try {
-          await writeTodayOverallStepsToSupabase(liveTotal);
-          setLastUpdatedAt(new Date());
-        } catch (e: any) {
-          setErrorMessage(
-            typeof e?.message === 'string' ? e.message : 'Failed to sync steps to Supabase.',
-          );
-        }
-      }, 15_000);
-    });
-  }, [userId, writeTodayOverallStepsToSupabase]);
-
-  // Auto-sync + live watch: on app open / returning to foreground, and once on mount.
   useEffect(() => {
-    let lastStartAt = 0;
-    const maybeStart = () => {
-      const now = Date.now();
-      if (now - lastStartAt < 10_000) return; // quick throttle
-      lastStartAt = now;
-      startLivePedometerWatch();
-      fetchStats();
-    };
-
-    maybeStart();
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') maybeStart();
-    });
+      if (state === 'active') fetchStats()
+    })
 
-    return () => {
-      sub.remove();
-      if (liveWatchRef.current) {
-        try {
-          liveWatchRef.current.remove();
-        } catch {
-          // ignore
-        }
-        liveWatchRef.current = null;
-      }
-      if (pendingSyncTimerRef.current) {
-        clearTimeout(pendingSyncTimerRef.current);
-        pendingSyncTimerRef.current = null;
-      }
-    };
-  }, [fetchStats, startLivePedometerWatch]);
+    return () => sub.remove()
+  }, [fetchStats])
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#3B3B3B', dark: '#000' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      
-      {/* Header */}
-      <ThemedView style={styles.headerContainer}>
-        <ThemedText type="title" style={styles.titleText}>📊 Your Stats</ThemedText>
-        <ThemedText type="subtitle" style={styles.subtitleText}>
-          Track your daily activity and global progress
+    <ThemedView style={styles.container}>
+
+      <View style={styles.header}>
+        <ThemedText type="title">Your Stats</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          Track your activity and progress
         </ThemedText>
-      </ThemedView>
+      </View>
 
-      {/* Stats Section */}
-      <ThemedView style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <ThemedText type="subtitle" style={styles.label}>Steps Today</ThemedText>
+      <View style={styles.statsGrid}>
+
+        <View style={styles.card}>
+          <ThemedText style={styles.label}>Steps Today</ThemedText>
           {loading ? (
             <ActivityIndicator />
           ) : (
-            <ThemedText type="title" style={styles.value}>{formatNumber(stepsToday)}</ThemedText>
+            <ThemedText style={styles.value}>{formatNumber(stepsToday)}</ThemedText>
           )}
         </View>
 
-        <View style={styles.statBox}>
-          <ThemedText type="subtitle" style={styles.label}>🌍 Total Steps</ThemedText>
+        <View style={styles.card}>
+          <ThemedText style={styles.label}>Total Steps</ThemedText>
           {loading ? (
             <ActivityIndicator />
           ) : (
-            <ThemedText type="title" style={styles.value}>{formatNumber(totalSteps)}</ThemedText>
+            <ThemedText style={styles.value}>{formatNumber(totalSteps)}</ThemedText>
           )}
         </View>
 
-        <View style={styles.statBox}>
-          <ThemedText type="subtitle" style={styles.label}>🏆 Tiers Earned Today</ThemedText>
-          <ThemedText type="title" style={styles.value}>—</ThemedText>
+        <View style={styles.card}>
+          <ThemedText style={styles.label}>Tiers Earned</ThemedText>
+          <ThemedText style={styles.value}>—</ThemedText>
         </View>
 
-        <View style={styles.statBox}>
-          <ThemedText type="subtitle" style={styles.label}>🎯 Active Events</ThemedText>
+        <View style={styles.card}>
+          <ThemedText style={styles.label}>Active Events</ThemedText>
           {loading ? (
             <ActivityIndicator />
           ) : (
-            <ThemedText type="title" style={styles.value}>{formatNumber(activeEventsCount)}</ThemedText>
+            <ThemedText style={styles.value}>{formatNumber(activeEventsCount)}</ThemedText>
           )}
         </View>
-      </ThemedView>
 
-      {/* Actions / Status */}
-      <ThemedView style={styles.footer}>
-        {errorMessage ? (
-          <ThemedText type="default" style={[styles.footerText, styles.errorText]}>
-            {errorMessage}
-          </ThemedText>
-        ) : (
-          <ThemedText type="default" style={styles.footerText}>
-            {lastUpdatedAt
-              ? `Last updated: ${lastUpdatedAt.toLocaleTimeString()}`
-              : 'Pulling live stats from Supabase…'}
+      </View>
+
+      <View style={styles.footer}>
+
+        <ThemedText style={styles.footerText}>
+          {lastUpdatedAt
+            ? `Last updated ${lastUpdatedAt.toLocaleTimeString()}`
+            : 'Loading stats...'}
+        </ThemedText>
+
+        <View style={styles.buttonRow}>
+
+          <Pressable
+            style={styles.button}
+            onPress={fetchStats}
+          >
+            <ThemedText style={styles.buttonText}>
+              Refresh
+            </ThemedText>
+          </Pressable>
+
+          <Pressable
+            style={styles.button}
+            onPress={syncTodayStepsFromPhone}
+          >
+            <ThemedText style={styles.buttonText}>
+              {syncing ? 'Syncing...' : 'Sync from Phone'}
+            </ThemedText>
+          </Pressable>
+
+        </View>
+
+        {pedometerAvailable === false && (
+          <ThemedText style={styles.footerText}>
+            Pedometer unavailable on this device
           </ThemedText>
         )}
 
-        <View style={styles.actionsRow}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={fetchStats}
-            disabled={loading || syncing}
-          >
-            <ThemedText style={styles.actionButtonText}>
-              {loading ? 'Refreshing…' : 'Refresh'}
-            </ThemedText>
-          </Pressable>
+      </View>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              pressed && styles.actionButtonPressed,
-            ]}
-            onPress={syncTodayStepsFromPhone}
-            disabled={loading || syncing}
-          >
-            <ThemedText style={styles.actionButtonText}>
-              {syncing ? 'Syncing…' : 'Sync from Phone'}
-            </ThemedText>
-          </Pressable>
-        </View>
-
-        {pedometerAvailable === false ? (
-          <ThemedText type="default" style={styles.footerText}>
-            Pedometer not available on this device.
-          </ThemedText>
-        ) : null}
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    </ThemedView>
+  )
 }
 
 const styles = StyleSheet.create({
-  reactLogo: {
-    height: 160,
-    width: 280,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    opacity: 0.2,
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  titleText: {
-    color: '#FFFFFF',
-  },
-  subtitleText: {
-    color: '#CCCCCC',
-  },
-  statsContainer: {
-    backgroundColor: '#1A1A1A',
+
+  container: {
+    flex: 1,
     padding: 20,
-    borderRadius: 16,
-    gap: 20,
+    backgroundColor: '#fff'
   },
-  statBox: {
-    backgroundColor: '#2A2A2A',
-    padding: 16,
+
+  header: {
+    marginBottom: 24
+  },
+
+  subtitle: {
+    opacity: 0.6,
+    marginTop: 4
+  },
+
+  statsGrid: {
+    gap: 14
+  },
+
+  card: {
+    backgroundColor: '#f9fafb',
+    padding: 18,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: 'center'
   },
+
   label: {
-    color: '#AAAAAA',
-    marginBottom: 6,
+    opacity: 0.6,
+    marginBottom: 6
   },
+
   value: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#2563eb'
   },
+
   footer: {
-    marginTop: 24,
+    marginTop: 30,
     alignItems: 'center',
-    gap: 10,
+    gap: 12
   },
+
   footerText: {
-    color: '#777777',
-    textAlign: 'center',
+    opacity: 0.6
   },
-  errorText: {
-    color: '#ff6b6b',
-  },
-  actionsRow: {
+
+  buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 12
   },
-  actionButton: {
-    backgroundColor: '#2A2A2A',
-    borderRadius: 12,
+
+  button: {
+    backgroundColor: '#2563eb',
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10
   },
-  actionButtonPressed: {
-    opacity: 0.85,
-  },
-  actionButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-});
+
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600'
+  }
+
+})
