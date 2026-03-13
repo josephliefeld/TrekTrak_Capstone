@@ -33,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from '../context/useAuth';
 
 export default function Create() {
-  // === State Variables ===
+  // GENERAL EVENT INFO
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [eventType, setEventType] = React.useState("");
@@ -41,23 +41,26 @@ export default function Create() {
   const [fileError, setFileError] = React.useState("");
   const [bannerFile, setBannerFile] = React.useState<File | null>(null);
 
-  const initialDate = new Date("2025-06-01");
-  const [startDate, setStartDate] = React.useState<Date | undefined>(initialDate);
-  const [endDate, setEndDate] = React.useState<Date | undefined>(initialDate);
+  const formatDate = (date: Date | undefined) =>
+    date?.toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" }) ?? "";
+  // START & END DATE CONFIGURATION
+  const today = new Date();
+  const [startDate, setStartDate] = React.useState<Date | undefined>(today);
+  const [endDate, setEndDate] = React.useState<Date | undefined>(today);
   const [startOpen, setStartOpen] = React.useState(false);
   const [endOpen, setEndOpen] = React.useState(false);
-  const [startMonth, setStartMonth] = React.useState<Date | undefined>(initialDate);
-  const [endMonth, setEndMonth] = React.useState<Date | undefined>(initialDate);
-  const [startValue, setStartValue] = React.useState("");
-  const [endValue, setEndValue] = React.useState("");
-
+  const [startMonth, setStartMonth] = React.useState<Date | undefined>(today);
+  const [endMonth, setEndMonth] = React.useState<Date | undefined>(today);
+  const [startValue, setStartValue] = React.useState(formatDate(today));
+  const [endValue, setEndValue] = React.useState(formatDate(today));
+  // PRIVATE EVENTS
   const [isPrivate, setIsPrivate] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
   const [csvFile, setCsvFile] = React.useState<File | null>(null);
   const [csvFileName, setCsvFileName] = React.useState("No file chosen");
   const [csvError, setCsvError] = React.useState("");
-
+  // SUBMIT
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // TIER CONFIGURGATION
   const [numTiers, setNumTiers] = React.useState<string>("0");
   const [tierLevels, setTierLevels] = React.useState<number[]>([]);
   const [tierIcons, setTierIcons] = React.useState<(File | null)[]>([]);
@@ -65,7 +68,7 @@ export default function Create() {
   
   // === Users profile_id
   const {userId} = useAuth()
-
+  // TEAM CONFIGURATION
   const [allowTeams, setAllowTeams] = React.useState(false);
   const [maxTeamSize, setMaxTeamSize] = React.useState<string>("0");
 
@@ -88,7 +91,7 @@ export default function Create() {
     });
   };
 
-  // === File Validation ===
+  // File validation for banner images
   const handleValidatedBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
@@ -97,7 +100,7 @@ export default function Create() {
       setBannerFile(null);
       return;
     }
-
+    // check file type
     const allowedTypes = ["image/png", "image/jpeg"];
     if (!allowedTypes.includes(file.type)) {
       setFileError("Only PNG or JPG images are allowed.");
@@ -105,7 +108,7 @@ export default function Create() {
       setBannerFile(null);
       return;
     }
-
+    // check file size
     const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
       setFileError("File is too large. Maximum size is 2MB.");
@@ -119,19 +122,20 @@ export default function Create() {
     setBannerFile(file);
   };
 
+  // File validation for tier icon images
   const handleValidatedTierFileChange = (
     index: number,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    // check file type
     const allowedTypes = ["image/png", "image/jpeg"];
     if (!allowedTypes.includes(file.type)) {
       alert("Only PNG or JPG images allowed.");
       return;
     }
-
+    // check file size
     const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
       alert("Max size is 2MB.");
@@ -151,7 +155,7 @@ export default function Create() {
     });
   };
 
-  // ===== CSV file Validation =====
+  // CSV file Validation
   const handleValidatedCsvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
   
@@ -174,13 +178,13 @@ export default function Create() {
     setCsvFileName(file.name);
   };
 
-  // === Date Helpers ===
-  const formatDate = (date: Date | undefined) =>
-    date?.toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" }) ?? "";
+  // Date Helpers
+  // const formatDate = (date: Date | undefined) =>
+  //   date?.toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" }) ?? "";
 
   const isValidDate = (date: Date | undefined) => date instanceof Date && !isNaN(date.getTime());
 
-  // === Submit Handler ===
+  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -386,7 +390,7 @@ export default function Create() {
                     <Input
                       id="startDate"
                       value={startValue}
-                      placeholder="June 01, 2025"
+                      // placeholder="June 01, 2025"
                       className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
                       onChange={(e) => {
                         setStartValue(e.target.value);
@@ -440,7 +444,7 @@ export default function Create() {
                     <Input
                       id="endDate"
                       value={endValue}
-                      placeholder="June 01, 2025"
+                      // placeholder="June 01, 2025"
                       className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/60 transition"
                       onChange={(e) => {
                         setEndValue(e.target.value);
