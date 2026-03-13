@@ -15,6 +15,9 @@ type Event = {
   end_date: string;
   event_description: string;
   is_published: boolean;
+  allow_teams: boolean;
+  max_team_size: number;
+
 };
 
 type Team = {
@@ -25,10 +28,10 @@ type Team = {
   owner_id: number;
 }
 
-export default function CreateTeamModal({ modalVisible, setModalVisible, event, getTeams, profileId, setProfileTeamId, setOwnsTeam} : 
+export default function CreateTeamModal({ createTeamModalVisible, setCreateTeamModalVisible, event, getTeams, profileId, setProfileTeamId, setOwnsTeam} : 
     { 
-        modalVisible: boolean, 
-        setModalVisible: React.Dispatch<React.SetStateAction<boolean>>,
+        createTeamModalVisible: boolean, 
+        setCreateTeamModalVisible: React.Dispatch<React.SetStateAction<boolean>>,
         event: Event,
         getTeams: (event: Event) => Promise<void>,
         profileId: number,
@@ -65,7 +68,7 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
             setTeamName('');
             setShowError(false);
             setProfileTeamId(data[0].id); //Set profile's team_id to the new team's id
-            setModalVisible(false);
+            setCreateTeamModalVisible(false);
             setOwnsTeam(true);
         }
     }
@@ -75,7 +78,7 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
     return (
         <Modal
             animationType='none'
-            visible={modalVisible}
+            visible={createTeamModalVisible}
             transparent={true}
             >
             <ThemedView style={modalstyles.outerThemedView}>
@@ -113,7 +116,7 @@ export default function CreateTeamModal({ modalVisible, setModalVisible, event, 
 
                         {/* Close Modal button */}
                         <TouchableOpacity 
-                        onPress={ () => {setModalVisible(false); setShowError(false); setTeamName('');}}
+                        onPress={ () => {setCreateTeamModalVisible(false); setShowError(false); setTeamName('');}}
                         style={modalstyles.defaultButton}
                         >
                             <ThemedText>
