@@ -1,4 +1,4 @@
-import { Link, Stack } from 'expo-router'
+import { Link, Stack, useRouter } from 'expo-router'
 import { StyleSheet, TextInput, Button, Alert, useColorScheme, Pressable, Text } from 'react-native'
 import { useState } from 'react'
 
@@ -7,6 +7,7 @@ import { ThemedView } from '@/src/components/themed-view'
 import { supabase } from '@/src/components/lib/supabase'
 
 export default function LoginScreen() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,45 +16,64 @@ export default function LoginScreen() {
   const colorScheme = useColorScheme() // "light" or "dark"
   const isDark = colorScheme === 'dark'
 
-  const handleLogin = async () => {
-    setLoading(true)
+const handleLogin = async () => {
+  setLoading(true)
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-    if (authError || !authData?.user) {
-      setLoading(false)
-      Alert.alert('Login failed', authError?.message ?? 'No user returned')
-      return
-    }
-
-    const userID = authData.user.id
-
-    const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-      .select('role')
-      .eq('profile_id', userID)
-      .single()
-
+  if (authError || !authData?.user) {
     setLoading(false)
-
-    if (profileError || !profile) {
-      Alert.alert('Login failed', 'Could not fetch user profile.')
-      return
-    }
-
-    if (profile.role !== 2) {
-      // Not a participant
-      await supabase.auth.signOut() // optional, log them out immediately
-      Alert.alert('Access denied', 'Only participants are allowed to log in on this app.')
-      //console.log("Only participants allowed!")
-      return
-    }
-
-    Alert.alert('Welcome!', 'You have successfully logged in.')
+    Alert.alert('Login failed', authError?.message ?? 'No user returned')
+    return
   }
+
+  const userID = authData.user.id
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('profile_id', userID)
+    .single()
+
+  if (profileError || !profile) {
+    setLoading(false)
+    Alert.alert('Login failed', 'Could not fetch user profile.')
+    return
+  }
+
+  if (profile.role !== 2) {
+    await supabase.auth.signOut()
+    setLoading(false)
+    Alert.alert('Access denied', 'Only participants are allowed to log in on this app.')
+    return
+  }
+
+  // NEW: Check event enrollment
+  const { data: enrollment, error: enrollmentError } = await supabase
+    .from('event_participants')
+    .select('event_id')
+    .eq('profile_id', userID)
+    .maybeSingle()
+
+  setLoading(false)
+
+  if (enrollmentError) {
+    Alert.alert('Error', 'Could not check event enrollment.')
+    return
+  }
+
+  Alert.alert('Welcome!', 'You have successfully logged in.') 
+
+  // Route depending on enrollment
+  if (enrollment) {
+    router.replace('/') // enrolled → event dashboard
+  } else {
+    router.replace('/events') // not enrolled → event list
+  }
+}
 
   const inputTextColor = isDark ? '#F9FAFB' : '#111827'
   const inputBorderColor = isDark ? '#4B5563' : '#D1D5DB'
