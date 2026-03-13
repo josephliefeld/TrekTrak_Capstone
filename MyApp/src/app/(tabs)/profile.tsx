@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { StyleSheet, TouchableOpacity, ActivityIndicator, View } from 'react-native'
+import { useEffect, useCallback, useState } from 'react'
+import { StyleSheet, TouchableOpacity, ActivityIndicator, View, Pressable } from 'react-native'
 import { ThemedText } from '@/src/components/themed-text'
 import { ThemedView } from '@/src/components/themed-view'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { supabase } from '@/src/components/lib/supabase'
 
 type Profile = {
@@ -13,41 +13,58 @@ type Profile = {
 
 export default function ProfileScreen() {
   const router = useRouter()
+
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
 
   const handleEditProfile = () => {
     router.push('../profile_edit/editProfile')
   }
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
+  const loadProfile = useCallback(async () => {
+    try {
+      setLoading(true)
+      setErrorMessage(null)
 
-        if (authError || !user) throw new Error('No authenticated user')
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('profile_id', user.id)
-          .single()
-
-        if (error) throw error
-
-        setProfile(data)
-      } catch (error) {
-        console.error(error)
-      } finally {
-        setLoading(false)
+      if (authError || !user) {
+        throw new Error('No authenticated user')
       }
-    }
 
-    loadProfile()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('profile_id, username, email')
+        .eq('profile_id', user.id)
+        .single()
+
+      if (error) throw error
+
+      setProfile(data)
+      setLastUpdatedAt(new Date())
+
+    } catch (error: any) {
+      console.error(error)
+      setErrorMessage(error?.message ?? 'Failed to load profile')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile()
+    }, [loadProfile])
+  )
 
   if (loading) {
     return (
@@ -61,6 +78,18 @@ export default function ProfileScreen() {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ThemedText>Profile not found.</ThemedText>
+
+        {errorMessage && (
+          <ThemedText style={styles.errorText}>
+            {errorMessage}
+          </ThemedText>
+        )}
+
+        <Pressable style={styles.refreshButton} onPress={loadProfile}>
+          <ThemedText style={styles.refreshText}>
+            Retry
+          </ThemedText>
+        </Pressable>
       </ThemedView>
     )
   }
@@ -92,12 +121,32 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.primaryButton} onPress={handleEditProfile}>
+
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleEditProfile}
+        >
           <ThemedText style={styles.primaryButtonText}>
             Change Password
           </ThemedText>
         </TouchableOpacity>
+
+        <Pressable
+          style={styles.secondaryButton}
+          onPress={loadProfile}
+        >
+          <ThemedText style={styles.secondaryButtonText}>
+            Refresh Profile
+          </ThemedText>
+        </Pressable>
+
       </View>
+
+      {lastUpdatedAt && (
+        <ThemedText style={styles.footerText}>
+          Last updated {lastUpdatedAt.toLocaleTimeString()}
+        </ThemedText>
+      )}
 
     </ThemedView>
   )
@@ -123,7 +172,12 @@ const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    gap: 12
+  },
+
+  errorText: {
+    color: '#ef4444'
   },
 
   card: {
@@ -153,7 +207,8 @@ const styles = StyleSheet.create({
   },
 
   actions: {
-    marginTop: 30
+    marginTop: 30,
+    gap: 12
   },
 
   primaryButton: {
@@ -166,6 +221,34 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#fff',
     fontWeight: '600'
+  },
+
+  secondaryButton: {
+    backgroundColor: '#e5e7eb',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center'
+  },
+
+  secondaryButtonText: {
+    fontWeight: '500'
+  },
+
+  refreshButton: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 10
+  },
+
+  refreshText: {
+    color: '#fff'
+  },
+
+  footerText: {
+    marginTop: 20,
+    textAlign: 'center',
+    opacity: 0.6
   }
 
 })

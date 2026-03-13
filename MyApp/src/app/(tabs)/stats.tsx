@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, AppState, Pressable, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, AppState, Pressable, StyleSheet, View, ScrollView } from 'react-native'
 import { Pedometer } from 'expo-sensors'
 
 import { ThemedText } from '@/src/components/themed-text'
@@ -142,90 +142,94 @@ export default function StatsScreen() {
   }, [fetchStats])
 
   return (
-    <ThemedView style={styles.container}>
 
-      <View style={styles.header}>
-        <ThemedText type="title">Your Stats</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Track your activity and progress
-        </ThemedText>
-      </View>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ThemedView>
 
-      <View style={styles.statsGrid}>
-
-        <View style={styles.card}>
-          <ThemedText style={styles.label}>Steps Today</ThemedText>
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <ThemedText style={styles.value}>{formatNumber(stepsToday)}</ThemedText>
-          )}
-        </View>
-
-        <View style={styles.card}>
-          <ThemedText style={styles.label}>Total Steps</ThemedText>
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <ThemedText style={styles.value}>{formatNumber(totalSteps)}</ThemedText>
-          )}
-        </View>
-
-        <View style={styles.card}>
-          <ThemedText style={styles.label}>Tiers Earned</ThemedText>
-          <ThemedText style={styles.value}>—</ThemedText>
-        </View>
-
-        <View style={styles.card}>
-          <ThemedText style={styles.label}>Active Events</ThemedText>
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <ThemedText style={styles.value}>{formatNumber(activeEventsCount)}</ThemedText>
-          )}
-        </View>
-
-      </View>
-
-      <View style={styles.footer}>
-
-        <ThemedText style={styles.footerText}>
-          {lastUpdatedAt
-            ? `Last updated ${lastUpdatedAt.toLocaleTimeString()}`
-            : 'Loading stats...'}
-        </ThemedText>
-
-        <View style={styles.buttonRow}>
-
-          <Pressable
-            style={styles.button}
-            onPress={fetchStats}
-          >
-            <ThemedText style={styles.buttonText}>
-              Refresh
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            style={styles.button}
-            onPress={syncTodayStepsFromPhone}
-          >
-            <ThemedText style={styles.buttonText}>
-              {syncing ? 'Syncing...' : 'Sync from Phone'}
-            </ThemedText>
-          </Pressable>
-
-        </View>
-
-        {pedometerAvailable === false && (
-          <ThemedText style={styles.footerText}>
-            Pedometer unavailable on this device
+        <View style={styles.header}>
+          <ThemedText type="title">Your Stats</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Track your activity and progress
           </ThemedText>
-        )}
+        </View>
 
-      </View>
+        <View style={styles.statsGrid}>
 
-    </ThemedView>
+          <View style={styles.card}>
+            <ThemedText style={styles.label}>Steps Today</ThemedText>
+            {loading ? (
+              <ActivityIndicator />
+            ) : (
+              <ThemedText style={styles.value}>{formatNumber(stepsToday)}</ThemedText>
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <ThemedText style={styles.label}>Total Steps</ThemedText>
+            {loading ? (
+              <ActivityIndicator />
+            ) : (
+              <ThemedText style={styles.value}>{formatNumber(totalSteps)}</ThemedText>
+            )}
+          </View>
+
+          <View style={styles.card}>
+            <ThemedText style={styles.label}>Tiers Earned</ThemedText>
+            <ThemedText style={styles.value}>—</ThemedText>
+          </View>
+
+          <View style={styles.card}>
+            <ThemedText style={styles.label}>Active Events</ThemedText>
+            {loading ? (
+              <ActivityIndicator />
+            ) : (
+              <ThemedText style={styles.value}>{formatNumber(activeEventsCount)}</ThemedText>
+            )}
+          </View>
+
+        </View>
+
+        <View style={styles.footer}>
+
+          <ThemedText style={styles.footerText}>
+            {lastUpdatedAt
+              ? `Last updated ${lastUpdatedAt.toLocaleTimeString()}`
+              : 'Loading stats...'}
+          </ThemedText>
+
+          <View style={styles.buttonRow}>
+
+            <Pressable
+              style={styles.button}
+              onPress={fetchStats}
+            >
+              <ThemedText style={styles.buttonText}>
+                Refresh
+              </ThemedText>
+            </Pressable>
+
+            <Pressable
+              style={styles.button}
+              onPress={syncTodayStepsFromPhone}
+            >
+              <ThemedText style={styles.buttonText}>
+                {syncing ? 'Syncing...' : 'Sync from Phone'}
+              </ThemedText>
+            </Pressable>
+
+          </View>
+
+          {pedometerAvailable === false && (
+            <ThemedText style={styles.footerText}>
+              Pedometer unavailable on this device
+            </ThemedText>
+          )}
+
+        </View>
+
+      </ThemedView>
+    </ScrollView>
+
   )
 }
 
