@@ -22,14 +22,13 @@ export default function EventsScreen() {
 
   const [search, setSearch] = useState('')
   const [events, setEvents] = useState<Event[]>([])
-  const [enrolledEvents, setEnrolledEvents] = useState<Event[]>([])
+  const [enrolledEventId, setEnrolledEventId] = useState<number | null>(null)
   const [bannerMessage, setBannerMessage] = useState('')
 
   const bannerOpacity = useRef(new Animated.Value(0)).current
   const profile = useAuthContext()
 
   async function fetchEvents() {
-
     const { data, error } = await supabase
       .from("events")
       .select("*")
@@ -39,38 +38,74 @@ export default function EventsScreen() {
     } else {
       setEvents(data ?? [])
     }
-
   }
 
-  async function fetchEnrolledEvents() {
+  async function fetchEnrollment() {
+
+    if (!profile.profile?.profile_id) return
 
     const { data, error } = await supabase
       .from("daily_steps")
-      .select("event_id, events(*)")
-      .eq("profile_id", profile.profile?.profile_id)
+      .select("event_id")
+      .eq("profile_id", profile.profile.profile_id)
+      .limit(1)
 
     if (error) {
-      console.error("Error fetching enrolled events:", error)
-    } else if (data) {
-
-      const enrolled = data.map((item: any) => item.events)
-      setEnrolledEvents(enrolled)
-
+      console.error("Error fetching enrollment:", error)
+      return
     }
 
+    if (data && data.length > 0) {
+      setEnrolledEventId(data[0].event_id)
+    }
   }
 
   useEffect(() => {
+    fetchEvents()
+  }, [])
 
-    if (profile.profile?.profile_id) {
-      fetchEvents()
-      fetchEnrolledEvents()
-    }
-
+  useEffect(() => {
+    fetchEnrollment()
   }, [profile.profile])
 
-  const showBanner = (message: string) => {
+  const enrollProfileInEvent = async (eventId: number) => {
 
+    if (!profile.profile?.profile_id) return
+
+    const { error } = await supabase
+      .from("daily_steps")
+      .insert({
+        profile_id: profile.profile.profile_id,
+        event_id: eventId,
+        dailysteps: 0,
+        date: new Date().toISOString().split('T')[0]
+      })
+
+    if (error) {
+      console.error("Error enrolling:", error)
+    } else {
+      setEnrolledEventId(eventId)
+    }
+  }
+
+  const unenrollProfileFromEvent = async (eventId: number) => {
+
+    if (!profile.profile?.profile_id) return
+
+    const { error } = await supabase
+      .from("daily_steps")
+      .delete()
+      .eq("profile_id", profile.profile.profile_id)
+      .eq("event_id", eventId)
+
+    if (error) {
+      console.error("Error unenrolling:", error)
+    } else {
+      setEnrolledEventId(null)
+    }
+  }
+
+  const showBanner = (message: string) => {
     setBannerMessage(message)
 
     Animated.timing(bannerOpacity, {
@@ -80,73 +115,41 @@ export default function EventsScreen() {
     }).start()
 
     setTimeout(() => {
-
       Animated.timing(bannerOpacity, {
         toValue: 0,
         duration: 200,
         useNativeDriver: true
       }).start()
-
     }, 3000)
-
   }
 
-  const handleEnroll = async (event: Event) => {
+  const handleEnroll = (event: Event) => {
 
-    if (enrolledEvents.length >= 1) {
+    if (enrolledEventId) {
       showBanner("You may only enroll in one event at a time")
       return
     }
 
-    const { error } = await supabase
-      .from("daily_steps")
-      .insert({
-        profile_id: profile.profile?.profile_id,
-        event_id: event.event_id,
-        dailysteps: 0,
-        stepdate: new Date().toISOString().split('T')[0]
-      })
-
-    if (error) {
-      console.error("Error enrolling:", error)
-      showBanner("Enrollment failed")
-      return
-    }
-
-    setEnrolledEvents([event])
+    enrollProfileInEvent(event.event_id)
     showBanner("Successfully enrolled")
-
   }
 
-  const handleUnenroll = async (event: Event) => {
-
-    const { error } = await supabase
-      .from("daily_steps")
-      .delete()
-      .eq("profile_id", profile.profile?.profile_id)
-      .eq("event_id", event.event_id)
-
-    if (error) {
-      console.error("Error unenrolling:", error)
-      showBanner("Failed to leave event")
-      return
-    }
-
-    setEnrolledEvents([])
+  const handleUnenroll = (event: Event) => {
+    unenrollProfileFromEvent(event.event_id)
     showBanner("You have left the event")
-
   }
 
   const filteredEvents = events.filter(event =>
     event.event_name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const enrolledEvent = events.find(e => e.event_id === enrolledEventId)
+
   const availableEvents = filteredEvents.filter(
-    event => !enrolledEvents.some(e => e.event_id === event.event_id)
+    event => event.event_id !== enrolledEventId
   )
 
   const renderEventItem = (event: Event, enrolled = false) => (
-
     <View style={styles.eventCard}>
 
       <View style={{ flex: 1 }}>
@@ -169,7 +172,6 @@ export default function EventsScreen() {
       </TouchableOpacity>
 
     </View>
-
   )
 
   return (
@@ -198,46 +200,29 @@ export default function EventsScreen() {
         />
       </View>
 
-      {enrolledEvents.length > 0 && (
+      {enrolledEvent && (
         <View style={styles.section}>
-
           <ThemedText type="subtitle">Your Event</ThemedText>
-
-          <FlatList
-            data={events.filter(e =>
-              enrolledEvents.some(en => en.event_id === e.event_id)
-            )}
-            keyExtractor={item => item.event_id.toString()}
-            renderItem={({ item }) => renderEventItem(item, true)}
-          />
-
+          {renderEventItem(enrolledEvent, true)}
         </View>
       )}
 
       <View style={styles.section}>
-
         <ThemedText type="subtitle">Available Events</ThemedText>
 
         {availableEvents.length > 0 ? (
-
           <FlatList
             data={availableEvents}
             keyExtractor={item => item.event_id.toString()}
             renderItem={({ item }) => renderEventItem(item)}
           />
-
         ) : (
-
           <ThemedText>No events match your search.</ThemedText>
-
         )}
-
       </View>
 
     </ThemedView>
-
   )
-
 }
 
 const styles = StyleSheet.create({
