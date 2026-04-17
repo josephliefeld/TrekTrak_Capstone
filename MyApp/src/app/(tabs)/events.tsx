@@ -30,7 +30,8 @@ type Team = {
   name: string;
   event_id: number;
   owner_id: number;
-}
+};
+
 
 export default function EventsScreen() {
 
@@ -52,15 +53,29 @@ export default function EventsScreen() {
   const [events, setEvents] = useState<Event[]>([])
 
   async function fetchEvents() {
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-
+    // 1) Load all events (optionally only published ones)
+    const { data: allEvents, error } = await supabase
+      .from('events')
+      .select('*')
+      // .eq('is_published', true) // uncomment if you want to hide unpublished events
+  
     if (error) {
-      console.error("Error fetching events:", error)
-    } else {
-      setEvents(data ?? [])
+      console.error('Error fetching events:', error)
+      setEvents([])
+      return
     }
+  
+    // 2) Determine which private events this user can see
+    const email = profile.profile?.email ?? ''
+    const allowedPrivateEventIds = await fetchAllowedPrivateEvents(email)
+  
+    // 3) Filter visible events: public OR (private AND allowed)
+    const visibleEvents = (allEvents ?? []).filter((event) => {
+      if (!event.is_private) return true
+      return allowedPrivateEventIds.includes(event.event_id)
+    })
+  
+    setEvents(visibleEvents)
   }
 
   async function fetchEnrollment() {
@@ -102,9 +117,30 @@ export default function EventsScreen() {
     }
   }
 
+  // Fetch allowed private events for this user by email
+  const fetchAllowedPrivateEvents = async (email: string) => {
+    if (!email) return [] as number[]
+
+    // normalize email to lower-case if your DB stores it lowercased
+    const normalizedEmail = email.toLowerCase()
+
+    const { data, error } = await supabase
+      .from('private_event_members')
+      .select('event_id')
+      .eq('email', normalizedEmail)
+
+    if (error) {
+      console.error('Error fetching allowed private events:', error)
+      return []
+    }
+
+    return (data ?? []).map((row) => row.event_id as number)
+  }
+
   useEffect(() => {
+    // Re-fetch events when the user object (email) changes
     fetchEvents()
-  }, [])
+  }, [profile.profile?.email])
 
   useEffect(() => {
     fetchEnrollment()
