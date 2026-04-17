@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   SafeAreaView,
   View,
@@ -11,9 +11,72 @@ import {
 import { Ionicons } from '@expo/vector-icons'
 import SignOutButton from '@/src/components/social-auth-buttons/sign-out-button'
 
+import { supabase } from '@/src/components/lib/supabase'
+import { useAuthContext } from '@/hooks/use-auth-context'
+
+
 export default function RootLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
+
+
+  // 👇 NEW: access profile from your AuthContext
+  const { profile } = useAuthContext() as {
+    profile?: { profile_id?: number | null; username?: string; email?: string } | null
+  }
+
+  // 👇 NEW: enrollment check state + one-time gate ref
+  const [checkingEnrollment, setCheckingEnrollment] = useState(false)
+  const [hasEnrollment, setHasEnrollment] = useState<boolean | null>(null)
+  const didGateRef = useRef(false)
+
+  // 👇 NEW: check if this user is enrolled in any event
+  useEffect(() => {
+    let cancelled = false
+    const checkEnrollment = async () => {
+      if (!profile?.profile_id) {
+        setHasEnrollment(null)
+        return
+      }
+      setCheckingEnrollment(true)
+      const { data, error } = await supabase
+        .from('daily_steps')
+        .select('event_id')
+        .eq('profile_id', profile.profile_id)
+        .limit(1)
+
+      if (!cancelled) {
+        if (error) {
+          console.warn('Enrollment check failed:', error.message)
+          setHasEnrollment(false)
+        } else {
+          setHasEnrollment((data?.length ?? 0) > 0)
+        }
+        setCheckingEnrollment(false)
+      }
+    }
+
+    checkEnrollment()
+    return () => {
+      cancelled = true
+    }
+  }, [profile?.profile_id])
+
+  // 👇 NEW: run the redirect ONCE post-login
+  useEffect(() => {
+    // Only act when a logged-in profile exists and the check is done
+    if (didGateRef.current) return
+    if (!profile) return
+    if (checkingEnrollment || hasEnrollment === null) return
+
+    didGateRef.current = true
+    if (hasEnrollment) {
+      router.replace('/')        // enrolled → Home (index.tsx)
+    } else {
+      router.replace('/events')  // not enrolled → Events
+    }
+  }, [profile, checkingEnrollment, hasEnrollment, router])
+
 
   function navigate(path: '/profile') {
     setMenuOpen(false)
