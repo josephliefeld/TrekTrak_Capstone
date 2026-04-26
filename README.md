@@ -1,7 +1,7 @@
 # TrekTrak
-A fitness challenge platform built for organizations to run events and for participants to join and track their progress.
+### A fitness challenge platform built for organizations to run events and for participants to join and track their progress.
 
-## What is TrekTrak
+## What is TrekTrak?
 TrekTrak is a fitness event management platform created to fit the needs of fitness event organizations that want to hosting events. TrekTrak allows organizations create and run activity challenges like walking competitions without expensive per-event software fees.
 
 Organizations manage everything from a web dashboard. Participants join events and track their progress from a mobile app on iOS or Android.
@@ -35,8 +35,12 @@ Building custom software isn't realistic for most teams. TrekTrak fills that gap
 
 ## Try It Out
 ### For Organizations
-[TrekTrak Website: For Fitness Organization & Event Organizers](https://trek-trak-capstone.vercel.app/)
-> Note: Organization/Organizer accounts must be created by an admin. To get access for your organization, reach out at admin@example.com and you'll recieve login credentials.
+This project is currently in development. We are not yet taking account creation requests. In the meantime, feel free to explore the codebase or follow along with progress.
+
+[TrekTrak Website](https://trek-trak-capstone.vercel.app/)
+<!--
+> Note: Organization/Organizer accounts must be created by an admin. To get access for your organization, reach out at -- and you'll receive login credentials.
+-->
 ### For Participants
 Coming soon to the App Store and Google Play
 
