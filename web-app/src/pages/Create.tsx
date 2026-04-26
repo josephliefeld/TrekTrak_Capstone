@@ -179,9 +179,6 @@ export default function Create() {
   };
 
   // Date Helpers
-  // const formatDate = (date: Date | undefined) =>
-  //   date?.toLocaleDateString("en-US", { day: "2-digit", month: "long", year: "numeric" }) ?? "";
-
   const isValidDate = (date: Date | undefined) => date instanceof Date && !isNaN(date.getTime());
 
   // Submit Handler
@@ -245,7 +242,7 @@ export default function Create() {
       });
 
       if (isPrivate && csvFile) {
-        // 1️⃣ Still upload file (optional but fine)
+        // Still upload file (optional but fine)
         const csvPath = `event_${eventId}_${Date.now()}_${csvFile.name}`;
       
         const { error: csvUploadError } = await supabase
@@ -257,7 +254,7 @@ export default function Create() {
           throw csvUploadError;
         }
       
-        // 2️⃣ Read CSV contents
+        // CSV contents
         const text = await csvFile.text();
       
         const emails = text
@@ -265,13 +262,13 @@ export default function Create() {
           .map(e => e.trim().toLowerCase())
           .filter(e => e.length > 0);
       
-        // 3️⃣ Convert to rows for DB
+        // Convert to rows for DB
         const rows = emails.map(email => ({
           event_id: eventId,
           email
         }));
       
-        // 4️⃣ Insert into approval table
+        // Insert into approval table
         const { error: insertError } = await supabase
           .from("private_event_members")
           .insert(rows);
