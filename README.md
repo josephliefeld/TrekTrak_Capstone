@@ -28,9 +28,9 @@ Building custom software isn't realistic for most teams. TrekTrak fills that gap
 
 ### For Participants (Mobile App)
 - **Easy registration** — Join events with a simple sign-up flow
-  ![A phone screenshot showing the mobile app event registration page.](readme_assets/mobile_screenshots/event_browse_page.png){width=200px}
+  ![A phone screenshot showing the mobile app event registration page.](readme_assets/mobile_screenshots/event_browse_page_small.png)
 - **Progress tracking** — Log activity and monitor your standings in real time
-  ![A phone screenshot showing the mobile app statistics page.](readme_assets/mobile_screenshots/event_stats_page.png){width=200px}
+  ![A phone screenshot showing the mobile app statistics page.](readme_assets/mobile_screenshots/event_stats_page_small.png)
 - **Cross-platform** — Available on both iOS and Android
 
 ## Try It Out
