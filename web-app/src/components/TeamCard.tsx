@@ -1,7 +1,6 @@
 import { supabase } from "@/components/lib/supabase/client";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { useAuth } from "../context/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,

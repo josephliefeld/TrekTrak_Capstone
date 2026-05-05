@@ -30,11 +30,6 @@ type Team = {
   owner_id: number;
 }
 
-type Profile = {
-  profile_id: string;
-  username: string;
-  team_id: number | null;
-}
 export default function Teams() {
 
   const { eventId } = useParams();
@@ -43,10 +38,6 @@ export default function Teams() {
 
   const [event, setEvent] = useState<Event | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
-
-
-  const [teamMembers, setTeamMembers] = useState<Record<number, Profile[]>>({})
-  
 
 
 
@@ -70,8 +61,6 @@ export default function Teams() {
       .from("teams")
       .select('*')
       .eq('event_id', eventId);
-
-    console.log("Data ", data);
     
     if (error) {
       console.error("Error fetching teams: ", error)
