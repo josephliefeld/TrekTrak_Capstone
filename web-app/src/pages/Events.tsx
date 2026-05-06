@@ -46,7 +46,7 @@ type Event = {
 
 export default function Events() {
 
-  const {userId} = useAuth()
+  const {userId} = useAuth();
 
   console.log("User ID in Events:", userId);
 
@@ -73,9 +73,14 @@ export default function Events() {
   }, []);
 
   const fetchEvents = async () => {
+    if (!userId) {
+      console.error("No user ID found. Cannot fetch events.");
+      return;
+    }
     const { data, error } = await supabase
-      .from<"events", Event>("events")
-      .select("*");
+      .from("events")
+      .select("*")
+      .eq("owner_id", userId);
 
     if (error) {
       console.error("Error fetching events:", error);
