@@ -30,47 +30,50 @@ export default function Participants() {
 
   const {userId} = useAuth()
 
-  const fetchEvents = async () => {
-    if (!eventId) return;
-
-    const { data } = await supabase
-      .from("events")
-      .select("*")
-      .eq("event_id", eventId)
-      .single();
-
-    setEvent(data);
-  };
-
-  const fetchParticipants = async () => {
-    if (!eventId) return;
-
-    const { data } = await supabase
-      .from("daily_steps")
-      .select("profile_id")
-      .eq("event_id", eventId);
-
-    if (!data) return;
-
-    const profileIds = Array.from(new Set(data.map(row => row.profile_id)));
-    await fetchProfiles(profileIds);
-  };
-
-  const fetchProfiles = async (profileIds: string[]) => {
-    if (profileIds.length === 0) {
-      setParticipants([]);
-      return;
-    }
-
-    const { data } = await supabase
-      .from("profiles")
-      .select("profile_id, username")
-      .in("profile_id", profileIds);
-
-    setParticipants(data as Profile[]);
-  };
+  
 
   useEffect(() => {
+    const fetchEvents = async () => {
+      if (!eventId) return;
+
+      const { data } = await supabase
+        .from("events")
+        .select("*")
+        .eq("event_id", eventId)
+        .single();
+
+      setEvent(data);
+    };
+
+    const fetchProfiles = async (profileIds: string[]) => {
+      if (profileIds.length === 0) {
+        setParticipants([]);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("profile_id, username")
+        .in("profile_id", profileIds);
+
+      setParticipants(data as Profile[]);
+    };
+    
+    const fetchParticipants = async () => {
+      if (!eventId) return;
+
+      const { data } = await supabase
+        .from("daily_steps")
+        .select("profile_id")
+        .eq("event_id", eventId);
+
+      if (!data) return;
+
+      const profileIds = Array.from(new Set(data.map(row => row.profile_id)));
+      await fetchProfiles(profileIds);
+    };
+
+
     setLoading(true);
     Promise.all([fetchEvents(), fetchParticipants()]).finally(() =>
       setLoading(false)

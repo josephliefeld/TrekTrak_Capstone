@@ -1,7 +1,6 @@
 import { supabase } from "@/components/lib/supabase/client";
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { useAuth } from "../context/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,12 +36,10 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
         isOwner: boolean
     }) {
 
-    const {userId} = useAuth()
     
 
     const [teamMembers, setTeamMembers] = useState<Profile[]>([])
     const [viewOpen, setViewOpen] = useState<boolean>(false)
-    const [loading, setLoading] = useState<boolean>(false)
     const [team, setTeam] = useState<Team>(teamProp)
 
     const fetchTeam = async () => {
@@ -76,7 +73,7 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
 
     
     const removeProfileFromTeam = async (profile: Profile) => {
-        const {data, error} = await supabase
+        const {error} = await supabase
         .from("profiles")
         .update( {team_id: null })
         .eq("profile_id", profile.profile_id)
