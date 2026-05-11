@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/components/lib/supabase/client";
 import { useAuth } from "../context/useAuth";
 import TeamCard from "../components/TeamCard"
@@ -30,11 +30,6 @@ type Team = {
   owner_id: number;
 }
 
-type Profile = {
-  profile_id: string;
-  username: string;
-  team_id: number | null;
-}
 export default function Teams() {
 
   const { eventId } = useParams();
@@ -45,12 +40,8 @@ export default function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
 
 
-  const [teamMembers, setTeamMembers] = useState<Record<number, Profile[]>>({})
-  
 
-
-
-  const fetchEvent = async () => {
+  const fetchEvent = useCallback(async () => {
     if (!eventId) return;
 
     const { data } = await supabase
@@ -60,34 +51,16 @@ export default function Teams() {
       .single();
 
     setEvent(data);
-  };
+  }, [eventId]);
 
 
-  const fetchTeamMembers = async (teamId: number) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("team_id", teamId);
+  const fetchTeams = useCallback( async () => {
+    if (!eventId) return;
 
-    if (error) {
-      console.error("Error fetching team members for team ", teamId, ": ", error);
-    }
-    else {
-      setTeamMembers(prev => (prev[teamId] = data))
-      console.log(teamMembers)
-    }
-  }
-
-
-
-
-  const fetchTeams = async () => {
     const { data, error } = await supabase
       .from("teams")
       .select('*')
       .eq('event_id', eventId);
-
-    console.log("Data ", data);
     
     if (error) {
       console.error("Error fetching teams: ", error)
@@ -95,12 +68,12 @@ export default function Teams() {
     else {
       setTeams(data ?? [])
     }
-  }
+  }, [eventId]);
 
   useEffect(() => {
     fetchEvent();
     fetchTeams()
-  }, [eventId]);
+  }, [fetchEvent, fetchTeams]);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12">
