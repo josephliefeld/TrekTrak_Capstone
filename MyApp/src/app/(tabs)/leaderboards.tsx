@@ -4,6 +4,7 @@ import {
   StyleSheet,
   View,
   ActivityIndicator,
+  ScrollView
 } from 'react-native'
 
 import { ThemedText } from '@/src/components/themed-text'
@@ -87,36 +88,41 @@ export default function LeaderboardsScreen() {
   )
 
   return (
-    <ThemedView style={styles.container}>
 
-      <View style={styles.header}>
-        <ThemedText type="title">Leaderboards</ThemedText>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ThemedView>
 
-        <ThemedText style={styles.subtitle}>
-          Top performers across events
-        </ThemedText>
-      </View>
+        <View style={styles.header}>
+          <ThemedText type="title">Leaderboards</ThemedText>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
-        </View>
-      ) : leaderboard.length > 0 ? (
-        <FlatList
-          data={leaderboard}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-        />
-      ) : (
-        <View style={styles.center}>
-          <ThemedText style={styles.emptyText}>
-            No leaderboard data yet.
+          <ThemedText style={styles.subtitle}>
+            Top performers across events
           </ThemedText>
         </View>
-      )}
 
-    </ThemedView>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" />
+          </View>
+        ) : leaderboard.length > 0 ? (
+          <FlatList
+            data={leaderboard}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.list}
+            scrollEnabled={false}
+          />
+        ) : (
+          <View style={styles.center}>
+            <ThemedText style={styles.emptyText}>
+              No leaderboard data yet.
+            </ThemedText>
+          </View>
+        )}
+
+      </ThemedView>
+    </ScrollView>
+
   )
 }
 

@@ -89,19 +89,18 @@ export default function Events() {
     }
   };
 
-
   const deleteEvent = async (event_id: number) => {
     const { error } = await supabase
       .from("events")
       .delete()
       .eq("event_id", event_id);
-      
-      if (error) {
-        console.error("Error deleting event:", error);
-      } else {
-          fetchEvents(); // Refresh the list after deletion
-      }
-  }
+    
+    if (error) {
+      console.error("Error deleting event:", error);
+    } else {
+      fetchEvents();
+    }
+  };
 
   const addEventIdToView = (id: number) => {
     setViewEventId(prev =>
@@ -111,7 +110,11 @@ export default function Events() {
     );
   };
 
-  // Filter Functions
+  const parseLocalDate = (dateString: string) => {
+    const [year, month, day] = dateString.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const checkOngoing = (event: Event) => {
     const today = new Date();
     const start = new Date(event.start_date);
@@ -129,11 +132,6 @@ export default function Events() {
       return today > end;
     }
     return false;
-  };
-
-  const parseLocalDate = (dateString: string) => {
-    const [year, month, day] = dateString.split("-").map(Number);
-    return new Date(year, month - 1, day);
   };
 
   const checkStartDate = (event: Event) => {
@@ -162,25 +160,20 @@ export default function Events() {
     setEndDateTo(undefined);
   };
 
-  // Apply search and filters
   let filteredEvents = events.filter(event =>
     searchCols.some(col =>
       String(event[col] ?? "").toLowerCase().includes(search.toLowerCase())
     )
   );
 
-  if (ongoingChecked) {
-    filteredEvents = filteredEvents.filter(checkOngoing);
-  } else if (pastChecked) {
-    filteredEvents = filteredEvents.filter(checkPast);
-  }
+  if (ongoingChecked) filteredEvents = filteredEvents.filter(checkOngoing);
+  else if (pastChecked) filteredEvents = filteredEvents.filter(checkPast);
 
   filteredEvents = filteredEvents.filter(checkStartDate);
   filteredEvents = filteredEvents.filter(checkEndDate);
 
   return (
     <>
-      {/* Header */}
       <div className="p-6">
         <h1 className="text-3xl font-extrabold text-blue-600 tracking-tight">
           Events
@@ -191,10 +184,7 @@ export default function Events() {
       </div>
 
       <div className="p-6 border border-gray-300 rounded-2xl space-y-6 bg-white">
-
-        {/* Search + Filters */}
         <div className="flex gap-4 items-start w-full">
-
           <Select onValueChange={(value) => {
             if (value === "all") {
               setSearchCols(["event_name", "event_description"]);
@@ -226,59 +216,73 @@ export default function Events() {
             <PopoverTrigger asChild>
               <Button variant="outline">Filter</Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 space-y-4">
+            
+            {/* 
+                align="end" aligns the right edge of the content to the button.
+                sideOffset={10} adds a little vertical breathing room.
+            */}
+            <PopoverContent className="w-auto space-y-6 p-4" align="end" sideOffset={10}> 
+              <div className="flex gap-4 items-center">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="ongoing"
+                    checked={ongoingChecked}
+                    onCheckedChange={(c) => setOngoingChecked(Boolean(c))}
+                  />
+                  <Label htmlFor="ongoing">Ongoing</Label>
+                </div>
 
-              <div className="flex gap-4">
-                <Checkbox
-                  checked={ongoingChecked}
-                  onCheckedChange={(c) => setOngoingChecked(Boolean(c))}
-                />
-                <Label>Ongoing</Label>
-
-                <Checkbox
-                  checked={pastChecked}
-                  onCheckedChange={(c) => setPastChecked(Boolean(c))}
-                />
-                <Label>Past</Label>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="past"
+                    checked={pastChecked}
+                    onCheckedChange={(c) => setPastChecked(Boolean(c))}
+                  />
+                  <Label htmlFor="past">Past</Label>
+                </div>
               </div>
 
-              <Label>Start Date</Label>
-              <Calendar
-                mode="range"
-                selected={{ from: startDateFrom, to: startDateTo }}
-                onSelect={(range) => {
-                  setStartDateFrom(range?.from);
-                  setStartDateTo(range?.to);
-                }}
-              />
+              {/* Side-by-side Calendars */}
+              <div className="flex gap-8">
+                <div className="space-y-2">
+                  <Label className="font-semibold text-gray-700">Start Date</Label>
+                  <div className="border rounded-md">
+                    <Calendar
+                      mode="range"
+                      selected={{ from: startDateFrom, to: startDateTo }}
+                      onSelect={(range) => {
+                        setStartDateFrom(range?.from);
+                        setStartDateTo(range?.to);
+                      }}
+                    />
+                  </div>
+                </div>
 
-              <Label>End Date</Label>
-              <Calendar
-                mode="range"
-                selected={{ from: endDateFrom, to: endDateTo }}
-                onSelect={(range) => {
-                  setEndDateFrom(range?.from);
-                  setEndDateTo(range?.to);
-                }}
-              />
+                <div className="space-y-2">
+                  <Label className="font-semibold text-gray-700">End Date</Label>
+                  <div className="border rounded-md">
+                    <Calendar
+                      mode="range"
+                      selected={{ from: endDateFrom, to: endDateTo }}
+                      onSelect={(range) => {
+                        setEndDateFrom(range?.from);
+                        setEndDateTo(range?.to);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
 
-              <Button onClick={resetFilters}>Reset</Button>
-
+              <Button onClick={resetFilters} className="w-full">Reset Filters</Button>
             </PopoverContent>
           </Popover>
         </div>
 
-        {/* Event Cards */}
         <div className="space-y-6 mt-6">
-
           {filteredEvents.map((event) => (
             <React.Fragment key={event.event_id}>
-
               <div className="flex items-center justify-between bg-gray-100 hover:bg-gray-200 transition rounded-2xl p-6 shadow-sm">
-
-                {/* Left Side */}
                 <div className="flex items-center gap-6">
-
                   <div className="w-28 h-28 overflow-hidden rounded-xl bg-gray-300 flex-shrink-0">
                     <img
                       src={event.banner_url || "https://picsum.photos/200/300"}
@@ -294,31 +298,25 @@ export default function Events() {
                     >
                       {event.event_name}
                     </Link>
-
                     <p className="text-gray-500 mt-1 text-left text-lg">
                       by {event.organizer}
                     </p>
                   </div>
                 </div>
 
-                {/* Right Side Buttons */}
                 <div className="flex items-center gap-10">
-                  
-                  {/* Display Edit and Delete Button only if event owner */}
                   {event.owner_id === userId && (
                     <div className='flex gap-4'>
                       <Link to={`/events/edit/${event.event_id}`}>
                         <Button size="lg" variant="default">Edit</Button>
                       </Link>
                     
-
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="destructive">Delete</Button>
                         </AlertDialogTrigger>
-
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
                             <AlertDialogTitle>Delete Event?</AlertDialogTitle>
                             <AlertDialogDescription>
                               This action cannot be undone. This will permanently delete your
@@ -336,12 +334,8 @@ export default function Events() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-
-                      
                     </div>
                   )}
-
-
 
                   <Button
                     size="lg"
@@ -351,27 +345,20 @@ export default function Events() {
                     View
                   </Button>
                 </div>
-
               </div>
 
-              {/* Expandable Details */}
               {viewEventId.includes(event.event_id) && (
                 <div className="bg-gray-50 rounded-xl p-6 shadow-sm">
                   <p>{event.event_description}</p>
-                  <p className="mt-2">
-                    {event.is_private ? "Private Event" : "Public Event"}
-                  </p>
+                  <p className="mt-2">{event.is_private ? "Private Event" : "Public Event"}</p>
                   <p>Type: {event.event_type}</p>
                   <p>Start: {event.start_date}</p>
                   <p>End: {event.end_date}</p>
                 </div>
               )}
-
             </React.Fragment>
           ))}
-
         </div>
-
         <Outlet />
       </div>
     </>
