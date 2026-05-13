@@ -11,6 +11,7 @@ import EventView from './pages/EventView';
 import EventEdit from './pages/EventEdit';
 import Participants from './pages/Participants';
 import Teams from './pages/Teams';
+import Leaderboards from './pages/Leaderboards';
 
 function App() {
   // const [count, setCount] = useState(0)
@@ -44,6 +45,7 @@ function App() {
               <Route path="/events/edit/:eventId" element={<EventEdit />} />
               <Route path="/events/participants/:eventId" element={<Participants />} />
               <Route path="/events/teams/:eventId" element={<Teams />} />
+              <Route path="/events/leaderboards/:eventId" element={<Leaderboards />} />
             </>
           )}
 

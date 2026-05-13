@@ -71,10 +71,10 @@ export default function EventView() {
           Teams
         </Link>
         <Link
-          to="statistics"
+          to={`/events/leaderboards/${event?.event_id}`}
           className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
         >
-          Statistics
+          Leaderboards
         </Link>
 
         {/* Only show edit button if owner of event */}

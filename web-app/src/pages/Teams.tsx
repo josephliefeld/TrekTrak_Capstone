@@ -106,10 +106,10 @@ export default function Teams() {
           </Link>
 
           <Link
-            to={`/events/statistics/${eventId}`}
+            to={`/events/leaderboards/${eventId}`}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition"
           >
-            Statistics
+            Leaderboards
           </Link>
 
           {/* Only show edit button if owner of event */}
