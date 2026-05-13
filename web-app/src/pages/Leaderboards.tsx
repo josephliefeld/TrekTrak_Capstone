@@ -21,7 +21,7 @@ type Event = {
 type LeaderboardEntry = {
   id: number;
   name: string;
-  points: number;
+  steps: number;
   rank: number;
 };
 
@@ -60,14 +60,14 @@ export default function Leaderboards() {
         - participant_id
         - participant_name
         - event_id
-        - points
+        - steps
     */
 
     const { data, error } = await supabase
       .from("participant_scores")
       .select("*")
       .eq("event_id", eventId)
-      .order("points", { ascending: false });
+      .order("steps", { ascending: false });
 
     if (error) {
       console.error("Error fetching leaderboard:", error);
@@ -78,7 +78,7 @@ export default function Leaderboards() {
       data?.map((participant, index) => ({
         id: participant.participant_id,
         name: participant.participant_name,
-        points: participant.points,
+        steps: participant.steps,
         rank: index + 1,
       })) ?? [];
 
@@ -148,7 +148,7 @@ export default function Leaderboards() {
             </h2>
 
             <p className="text-sm text-gray-500">
-              Ranked by total points
+              Ranked by total steps
             </p>
           </div>
 
@@ -170,7 +170,7 @@ export default function Leaderboards() {
                     </th>
 
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Points
+                      Steps
                     </th>
                   </tr>
                 </thead>
@@ -193,7 +193,7 @@ export default function Leaderboards() {
                       </td>
 
                       <td className="px-6 py-4 font-semibold text-blue-600">
-                        {participant.points}
+                        {participant.steps}
                       </td>
                     </tr>
                   ))}
