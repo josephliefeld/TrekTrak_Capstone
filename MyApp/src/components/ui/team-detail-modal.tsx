@@ -1,9 +1,10 @@
 import { styles } from '@/src/app/(tabs)/events';
-import { Modal, TouchableOpacity, TextInput, StyleSheet, Pressable, View } from 'react-native';
+import { Modal, TouchableOpacity, StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { IconSymbol } from '@/src/components/ui/icon-symbol';
 
 type Event = {
   event_id: number;
@@ -33,9 +34,12 @@ type Profile = {
   username: string;
   team_id: number | null;
   email: string;
+  daily_steps: [ {
+    dailysteps: number;
+  }];
 }
 
-export default function TeamDetailModal({ modalVisible, setModalVisible, event, getTeams, profileId, isTeamOwner, team} : 
+export default function TeamDetailModal({ modalVisible, setModalVisible, event, getTeams, profileId, isTeamOwner, team, teamSteps} : 
     { 
         modalVisible: boolean, 
         setModalVisible: React.Dispatch<React.SetStateAction<Team | null>>,
@@ -43,26 +47,28 @@ export default function TeamDetailModal({ modalVisible, setModalVisible, event, 
         getTeams: (event: Event) => Promise<void>,
         profileId: number,
         isTeamOwner: boolean,
-        team: Team | null
+        team: Team | null,
+        teamSteps: {team_id: number, total_steps: number}[]
     }) 
 {
     const [teamName, setTeamName] = useState('');
     const [showError, setShowError] = useState(false);
     const [teamMembers, setTeamMembers] = useState<Profile[]>([])
+    const teamTotalSteps = teamSteps.find((t) => t.team_id === team?.id)?.total_steps || 0;
 
 
     const fetchTeamMembers = async (teamId: number | undefined) => {
 
         const { data, error } = await supabase
             .from("profiles")
-            .select("*")
+            .select("*, daily_steps(dailysteps)")
             .eq("team_id", teamId);
 
         if (error) {
             console.error("Error fetching team members for team ", teamId, ": ", error);
         }
         else {
-            console.log("data==", data)
+            console.log("memberdata==", data)
             setTeamMembers(data)
         }
     }
@@ -84,7 +90,6 @@ export default function TeamDetailModal({ modalVisible, setModalVisible, event, 
                 getTeams(event)
             }
         }
-
     }
 
     useEffect(() => {
@@ -94,6 +99,18 @@ export default function TeamDetailModal({ modalVisible, setModalVisible, event, 
         }
 
     }, [modalVisible])
+
+    const sortTeamMembers = (members: Profile[], ownerId?: string) => {
+        return [...members].sort((a, b) => {
+            if (a.profile_id === ownerId) return -1;
+            if (b.profile_id === ownerId) return 1;
+            return 0;
+        });
+    };
+
+    const sortedMembers = useMemo(() => {
+        return sortTeamMembers(teamMembers, team?.owner_id?.toString());
+    }, [teamMembers, team?.owner_id]);
 
 
 
@@ -107,38 +124,63 @@ export default function TeamDetailModal({ modalVisible, setModalVisible, event, 
             <ThemedView style={modalstyles.outerThemedView}>
                 <ThemedView style={modalstyles.modalContainer}>
 
-                    <ThemedView>
-                        <ThemedText type="subtitle">{team?.name}</ThemedText>
+                    <ThemedView style={modalstyles.nameContainer}>
+                        <ThemedText type="subtitle" style={modalstyles.teamName}>{team?.name}</ThemedText>
                     </ThemedView>
 
+                    <ThemedView style={{marginVertical: 12}}>
+                        <ThemedText>Team Steps: {teamTotalSteps}</ThemedText>
+                    </ThemedView>
 
+                    <ScrollView style={{width: '100%', flex: 1}}>
                     {
                         teamMembers.length == 0 ?
                         <ThemedText>This team is empty</ThemedText> 
-                        :
-                        teamMembers.map((profile) => (
+                        : 
+                        sortedMembers.map((profile) => (
                             <View key={profile.profile_id} style={modalstyles.memberCard}>
-                                <View >
-                                    <ThemedText numberOfLines={2} ellipsizeMode="tail" type='defaultSemiBold'>{profile.username}</ThemedText>
-                                    {
-                                        team?.owner_id.toString() == profile.profile_id &&
-                                        <ThemedText>Team Owner</ThemedText>
+                                <View style={{ width: team?.owner_id.toString() == profile.profile_id ? '100%' : '80%' }}>                                    
+                                    <View style={modalstyles.userInfo}>
+                                        <ScrollView style={{ flex: 1, width: '50%'}} horizontal showsHorizontalScrollIndicator={false}>
+                                            <ThemedText  numberOfLines={1} ellipsizeMode="tail" type='defaultSemiBold'>
+                                                {profile.username}
+                                            </ThemedText>
+                                        </ScrollView>
 
-                                    }
+                                        
+                                        {
+                                            team?.owner_id.toString() == profile.profile_id &&
+                                            <View style={{ alignItems: 'flex-end'}}>
+                                                <ThemedText style={{fontSize: 14, color: '#2c2c2c'}}>Team Owner</ThemedText>
+                                            </View>   
+
+                                        }
+                                                                   
+                                    </View>
+                                    <ScrollView 
+                                            horizontal 
+                                            showsHorizontalScrollIndicator={false}
+                                        >
+                                            <ThemedText style={{textAlign: 'left'}}>
+                                                Steps: {profile.daily_steps[0].dailysteps}
+                                            </ThemedText>
+                                    </ScrollView>
+
                                 </View>
-                                {/* <ThemedText>{profile.email}</ThemedText> */}
 
                                 {isTeamOwner && profile.profile_id !== profileId.toString() &&
                                     <TouchableOpacity style={modalstyles.removeMemberButton}
                                         onPress={() => removeProfileFromTeam(profile)}
                                     >
-                                        <ThemedText type='defaultSemiBold'>
-                                            Remove
+                                        <ThemedText type='defaultSemiBold' style={{padding: 2}}>
+                                            <IconSymbol name='person.badge.minus.fill' size={18} color="#fff" />
                                         </ThemedText>
                                     </TouchableOpacity>
                                 }
                             </View>
-                    ))}
+                        ))
+                    }
+                    </ScrollView>
 
                     <ThemedView style={modalstyles.buttonsContainer} >
 
@@ -146,13 +188,10 @@ export default function TeamDetailModal({ modalVisible, setModalVisible, event, 
                         onPress={ () => {setModalVisible(null); setShowError(false); setTeamName('');}}
                         style={modalstyles.defaultButton}
                         >
-                            <ThemedText>
+                            <ThemedText style={styles.buttonText}>
                                 Close
                             </ThemedText> 
                         </TouchableOpacity>
-
-
-
 
                     </ThemedView>
 
@@ -172,12 +211,12 @@ const modalstyles = StyleSheet.create({
         backgroundColor: "rgba(0, 0, 0, 0.284)"
     },
     modalContainer: {
+        maxHeight: "80%",              // limit height to 80% of the screen
         width: "80%",               // inner box width
-        // height: "40%",
         backgroundColor: "#ffffff",
         borderRadius: 10,
         padding: 20,
-        justifyContent: "space-around",   // center inner content vertically if needed
+        justifyContent: "flex-start",   // center inner content vertically if needed
         alignItems: "center",       // center inner content horizontally
     },
     buttonsContainer: {
@@ -203,14 +242,32 @@ const modalstyles = StyleSheet.create({
         width: '100%',
         marginVertical: 2,
         justifyContent: 'space-between',
-        minHeight: "30%"
+        //minHeight: "30%"
+        height: 60
 
     },
     removeMemberButton: {
         backgroundColor: "#F44336",
         borderRadius: 6,
-        paddingHorizontal: 4
+        paddingHorizontal: 4,
+        marginLeft: '5%',
+        marginRight: '3%'
 
+    },
+    userInfo: {
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        paddingRight: 10
+
+    },
+    nameContainer: {
+        flexDirection: 'row',
+        width: '100%',
+        overflow: 'scroll'
+    },
+    teamName: {
+        flexWrap: 'wrap'
     }
 
 

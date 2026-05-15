@@ -33,6 +33,15 @@ type Team = {
 };
 
 
+type Profile = {
+  profile_id: string;
+  username: string;
+  team_id: number | null;
+  email: string;
+  total_steps: number | null;
+}
+
+
 export default function EventsScreen() {
 
   const [search, setSearch] = useState('')
@@ -46,11 +55,11 @@ export default function EventsScreen() {
   const [teams, setTeams] = useState<Team[]>([])
   const [profileTeamId, setProfileTeamId] = useState<number | null>(profile.profile?.team_id)
   const [createTeamModalVisible, setCreateTeamModalVisible] = useState<boolean>(false)
-  const [teamDetailModalVisible, setTeamDetailModalVisible] = useState<boolean>(false)
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null) 
   const [ownsTeam, setOwnsTeam] = useState<boolean>(false)
 
   const [events, setEvents] = useState<Event[]>([])
+  const [teamSteps, setTeamSteps] = useState<{team_id: number, total_steps: number}[]>([])
 
   async function fetchEvents() {
     // 1) Load all events (optionally only published ones)
@@ -117,6 +126,20 @@ export default function EventsScreen() {
     }
   }
 
+  const fetchAllTeamSteps = async () => {
+    const { data, error } = await supabase
+      .schema('public')
+      .rpc('get_all_team_total_steps')
+    
+      if(error) {
+        console.error("Error fetching team steps:", error)
+      }
+      else {
+        console.log("Team steps data:", data)
+        setTeamSteps(data)
+      }
+  }
+
   // Fetch allowed private events for this user by email
   const fetchAllowedPrivateEvents = async (email: string) => {
     if (!email) return [] as number[]
@@ -140,6 +163,8 @@ export default function EventsScreen() {
   useEffect(() => {
     // Re-fetch events when the user object (email) changes
     fetchEvents()
+    fetchAllTeamSteps();
+
   }, [profile.profile?.email])
 
   useEffect(() => {
@@ -375,6 +400,10 @@ export default function EventsScreen() {
             <IconSymbol name="person.2.fill" color="#403a39"/>
             <ThemedText>{team.size} / {enrolledEvents[0].max_team_size}</ThemedText>
           </View>
+          <View style={styles.teamNumUsers}>
+            <IconSymbol name="flame.fill" color="#403a39"/>
+            <ThemedText>Steps: {teamSteps.find( t => t.team_id == team.id )?.total_steps || 0}</ThemedText>
+          </View>
         </Pressable>
 
         <View style={styles.teamCardRightInfo}>
@@ -382,13 +411,14 @@ export default function EventsScreen() {
             onPress={() => inTeam ? removeProfileFromTeam(team) : addProfileToTeam(team)}
             style={[styles.teamButton, inTeam ? styles.leaveTeamButton : styles.joinTeamButton]}
           >
-            <ThemedText type='defaultSemiBold'>
+            <ThemedText type='defaultSemiBold' style={styles.buttonText}>
               {inTeam ? "Leave Team" : "Join Team"}
             </ThemedText>
           </TouchableOpacity>
 
           {profile.profile?.profile_id == team.owner_id &&
             <TouchableOpacity 
+              style={styles.deleteIcon}
               onPress={() => {
                 if (team.size > 0) {
                   showBanner("⚠️ Cannot delete a team with members still in it.")
@@ -397,7 +427,7 @@ export default function EventsScreen() {
                 deleteTeam(team)
               }}
             >
-              <IconSymbol name="trash.fill" size={24} color="#403a39" />
+              <IconSymbol name="trash.fill" size={28} color="#403a39" />
             </TouchableOpacity>
           }
         </View>
@@ -461,7 +491,7 @@ export default function EventsScreen() {
 
           {enrolledEvents[0].allow_teams && (
           <>
-            <ThemedText style={styles.teamHeader}>Create and join teams</ThemedText>
+            <ThemedText style={styles.teamHeader}>Create and Join Teams</ThemedText>
 
             <TouchableOpacity 
               style={[styles.createTeamButton,
@@ -480,7 +510,7 @@ export default function EventsScreen() {
             >
               <ThemedText 
                 type='defaultSemiBold'
-                style={(profileTeamId != null || ownsTeam) && styles.disabledText}
+                style={(profileTeamId != null || ownsTeam) ? styles.disabledText : styles.buttonText}
               >
                 Create Team
               </ThemedText>
@@ -515,6 +545,7 @@ export default function EventsScreen() {
               profileId={profile.profile?.profile_id}
               isTeamOwner={profile.profile?.profile_id == selectedTeam?.owner_id}
               team={selectedTeam}
+              teamSteps={teamSteps}
             />
           </>
           )}
@@ -562,12 +593,13 @@ export const styles = StyleSheet.create({
   teamItem:{backgroundColor:'#c7f1ff',borderRadius:12,padding:0,marginTop:8,marginBottom:8,flexDirection:'row',gap:16,alignItems:'center',justifyContent:'space-between'},
   teamHeader:{fontSize:18,fontWeight:'bold'},
   teamButton:{borderRadius:6,width:100,justifyContent:'center',alignItems:'center',fontWeight:'bold'},
-  joinTeamButton:{backgroundColor:'#a7cbed'},
-  leaveTeamButton:{backgroundColor:'#ff655a'},
-  createTeamButton:{backgroundColor:'#99eeff',borderRadius:6,width:120,marginVertical:8,alignItems:'center'},
-  disabledButton:{backgroundColor:'#dff7fb'},
-  disabledText:{color:'#b7b6b6'},
+  joinTeamButton:{backgroundColor:'#a7cbed', paddingVertical: 6},
+  leaveTeamButton:{backgroundColor:'#ef4444', paddingVertical: 6},
+  createTeamButton:{backgroundColor:'#2563eb',borderRadius:6,width:'100%', height: 40, marginVertical:8,alignItems:'center', justifyContent:'center'},
+  disabledButton:{backgroundColor:'#a8c0f4'},
+  disabledText:{color:'#f5eded'},
   teamNumUsers:{alignItems:'center',flexDirection:'row',gap:4},
-  teamCardLeftInfo:{width:'45%',backgroundColor:'#b7b6b6',padding:12,borderStartStartRadius:12,borderBottomStartRadius:12},
-  teamCardRightInfo:{width:'50%',flexDirection:'row',justifyContent:'space-between',padding:12}
+  teamCardLeftInfo:{width:'45%',backgroundColor:'#f3f4f6',padding:12,borderStartStartRadius:12,borderBottomStartRadius:12},
+  teamCardRightInfo:{width:'50%',flexDirection:'row',justifyContent:'space-between',padding:12},
+  deleteIcon:{justifyContent:'center'}
 });

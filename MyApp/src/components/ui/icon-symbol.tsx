@@ -19,7 +19,9 @@ const MAPPING = {
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
   'trash.fill': 'delete',
-  'person.2.fill': 'group'
+  'person.2.fill': 'group',
+  'person.badge.minus.fill': 'person-remove'
+
 } as IconMapping;
 
 /**
