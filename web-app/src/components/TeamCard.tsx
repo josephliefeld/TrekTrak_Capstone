@@ -1,5 +1,5 @@
 import { supabase } from "@/components/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   AlertDialog,
@@ -26,7 +26,16 @@ type Profile = {
   username: string;
   team_id: number | null;
   email: string;
+  total_steps: number | null;
 }
+
+type DailyStepsProfile = {
+    dailysteps: number;
+    profiles: {  // object, not array
+        profile_id: string;
+        team_id: number | null;
+    };
+};
 
 
 export default function TeamCard({teamProp, max_team_size, isOwner} : 
@@ -41,6 +50,7 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
     const [teamMembers, setTeamMembers] = useState<Profile[]>([])
     const [viewOpen, setViewOpen] = useState<boolean>(false)
     const [team, setTeam] = useState<Team>(teamProp)
+    const [membersSteps, setMembersSteps] = useState<DailyStepsProfile[]>([])
 
     const fetchTeam = async () => {
         const {data, error} = await supabase
@@ -71,6 +81,35 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
         }
     }
 
+    const fetchMembersFromDailySteps = async (teamId: number) => {
+
+        const { data, error } = await supabase
+            .from('daily_steps')
+            .select(`
+                dailysteps,
+                profiles!inner (
+                profile_id,
+                team_id
+                )
+            `)
+            .eq('profiles.team_id', teamId)
+
+        if (error) {
+            console.error("Error fetching team members from daily steps for team ", teamId, ": ", error);
+        }
+        else {
+            console.log(data)
+            setMembersSteps(data as unknown as DailyStepsProfile[])
+        }
+
+    }
+
+
+    useEffect(() => {
+        fetchTeamMembers(team.id)
+        fetchMembersFromDailySteps(team.id)
+    }, [team.id])
+
     
     const removeProfileFromTeam = async (profile: Profile) => {
         const {error} = await supabase
@@ -83,9 +122,23 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
         }
         else {
             fetchTeamMembers(team.id)
+            fetchMembersFromDailySteps(team.id)
             fetchTeam()
         }
 
+    }
+
+
+    const calculateTeamSteps = () => {
+        if (membersSteps.length > 0) {
+            const totalSteps = membersSteps.reduce((total, member) => {
+                return total + (member.dailysteps || 0)
+            }, 0)
+
+            return totalSteps
+        }
+
+        return 0
     }
     
 
@@ -93,9 +146,11 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
         <div className="bg-white rounded-lg shadow p-4 m-4">
 
             <div className="flex flex-row justify-between mx-2">
-                <h3 className="text-lg font-medium text-gray-900">{team.name}</h3>
+                <h3 className="text-lg font-medium text-gray-900 max-w-[30%] overflow-auto">{team.name}</h3>
 
                 <p>Members: {team.size} / {max_team_size}</p>
+
+                <p>Team Steps: {calculateTeamSteps()}</p>
 
                 <Button onClick={async () => {
                     if (viewOpen){
@@ -118,7 +173,7 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
                     :
                     teamMembers.map((profile) => (
                         <div key={profile.profile_id} className="flex items-center justify-between bg-gray-100 hover:bg-gray-200 transition rounded-2xl p-4 m-2 shadow-sm">
-                            <div className="flex flex-col items-start">
+                            <div className="flex flex-col items-start w-[25%] overflow-auto">
                                 <p className="font-bold text-lg">{profile.username}</p>
                                 {
                                     team.owner_id.toString() == profile.profile_id &&
@@ -126,7 +181,14 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
 
                                 }
                             </div>
-                            <p>{profile.email}</p>
+                            <p className="w-[35%] overflow-auto">{profile.email}</p>
+
+                            <p className="max-w-[20%]">Steps: { 
+                                membersSteps
+                                    .filter((member) => member.profiles?.profile_id === profile.profile_id)
+                                    .reduce((sum, member) => sum + (member.dailysteps || 0), 0)
+                            }
+                            </p>
 
                             {isOwner &&
                                 <AlertDialog>
@@ -139,7 +201,7 @@ export default function TeamCard({teamProp, max_team_size, isOwner} :
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Remove User From Team?</AlertDialogTitle>
-                                        <AlertDialogDescription>
+                                        <AlertDialogDescription className="break-all">
                                         This action cannot be undone. This will remove 
                                         <span className="font-bold"> {profile.username}</span> from 
                                         team 

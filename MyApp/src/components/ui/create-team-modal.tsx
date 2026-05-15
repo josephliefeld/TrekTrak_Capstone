@@ -85,7 +85,7 @@ export default function CreateTeamModal({ createTeamModalVisible, setCreateTeamM
                 <ThemedView style={modalstyles.modalContainer}>
 
                     <ThemedView>
-                        <ThemedText type="subtitle">Create new team</ThemedText>
+                        <ThemedText type="subtitle">Create New Team</ThemedText>
                     </ThemedView>
 
                     <ThemedView>
@@ -109,7 +109,7 @@ export default function CreateTeamModal({ createTeamModalVisible, setCreateTeamM
                         onPress={ () => createTeam()}
                         style={modalstyles.defaultButton}
                         >
-                            <ThemedText>
+                            <ThemedText style={[styles.buttonText,  {textAlign: 'center'}]}>
                                 Create and Join
                             </ThemedText> 
                         </TouchableOpacity>
@@ -119,7 +119,7 @@ export default function CreateTeamModal({ createTeamModalVisible, setCreateTeamM
                         onPress={ () => {setCreateTeamModalVisible(false); setShowError(false); setTeamName('');}}
                         style={modalstyles.defaultButton}
                         >
-                            <ThemedText>
+                            <ThemedText style={[styles.buttonText, {textAlign: 'center'}]}>
                                 Cancel
                             </ThemedText> 
                         </TouchableOpacity>
@@ -142,7 +142,7 @@ const modalstyles = StyleSheet.create({
         flex: 1,                    // fill the whole screen
         justifyContent: "center",   // vertical center
         alignItems: "center",       // horizontal center
-        backgroundColor: "rgba(0, 0, 0, 0.608)"
+        backgroundColor: "rgba(0, 0, 0, 0.284)"
     },
     modalContainer: {
         width: "80%",               // inner box width
@@ -164,7 +164,7 @@ const modalstyles = StyleSheet.create({
         alignItems: 'center',
         fontWeight: 'bold',
         padding: 5,
-        width: 120,
+        width: 120
 
     }
 
